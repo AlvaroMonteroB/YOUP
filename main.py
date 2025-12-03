@@ -54,6 +54,24 @@ async def save_lead(user: UserProfile):
         print(f"Error DB: {e}") 
         raise HTTPException(status_code=500, detail="Error interno al guardar los datos")
 
+@app.get("/get-lead/{phone_number}")
+async def get_lead(phone_number: str):
+    """
+    Busca si ya conocemos a este usuario por su teléfono.
+    Útil para que el Agente personalice la charla.
+    """
+    # Buscamos en la base de datos (excluyendo el _id interno de mongo)
+    user = await users_collection.find_one(
+        {"phone_number": phone_number},
+        {"_id": 0} # No mostramos el ID técnico
+    )
+    
+    if user:
+        return {"status": "found", "data": user}
+    else:
+        # Si no existe, devolvemos un 404 manejado para que el Agente sepa que es nuevo
+        raise HTTPException(status_code=404, detail="Usuario nuevo, no hay historial.")
+
 # 5. Health Check (Buena práctica para servidores productivos)
 @app.get("/")
 async def health_check():
