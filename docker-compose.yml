@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  # Tu aplicación Python (FastAPI)
+  bot-api:
+    build: .
+    container_name: marketing_bot
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo_db
+    environment:
+      # Conexión usando el nombre del servicio 'mongo_db' y las credenciales de abajo
+      - MONGO_URI=mongodb://admin:root-1756-sffrgd-ddj86t@mongo_db:27017/marketing_db?authSource=admin
+
+  # Base de datos MongoDB
+  mongo_db:
+    image: mongo:latest
+    container_name: marketing-mongo
+    restart: always
+    # Estos son los equivalentes a los -e del comando que te fallaba
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: root-1756-sffrgd-ddj86t
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
