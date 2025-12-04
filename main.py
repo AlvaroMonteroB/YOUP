@@ -103,7 +103,7 @@ async def save_lead(user: UserProfile):
                 "id": str(result.upserted_id),
                 "action": "created",
                 "phone": raw_phone,
-                "mensaje": f"Nuevo usuario registrado con éxito. Teléfono: {raw_phone}."
+                "mensaje": f"¡Hola! ¿En qué podemos ayudarle hoy?⁄n Estamos aquí para darte cualquier información a cerca de los productos que ofrecemos"
             }
             return responder(201, "Registro Exitoso", raw_data)
         else:
@@ -111,7 +111,7 @@ async def save_lead(user: UserProfile):
                 "id": raw_phone,
                 "action": "updated",
                 "phone": raw_phone,
-                "mensaje": f"Preferencias actualizadas para el usuario {raw_phone}."
+                "mensaje": f"¡Hola de nuevo! Seguimos motivados para poder ayudarle, si tiene alguna duda, ¡no dude en preguntar!"
             }
             return responder(200, "Actualización Exitosa", raw_data)
 
