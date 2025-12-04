@@ -45,7 +45,7 @@ users_collection = db.users
 
 class UserProfile(BaseModel):
     function_call_username: str = Field(..., description="Identificador o teléfono del usuario (puede incluir prefijos con --)")
-    preferences: str = Field(..., description="Texto libre con preferencias o resumen")
+    #preferences: str = Field(..., description="Texto libre con preferencias o resumen")
     source: Optional[str] = Field("bot_marketing", description="Origen del lead")
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -55,6 +55,9 @@ class AgentResponse(BaseModel):
     markdown: str = Field(..., description="Respuesta legible para mostrar al usuario o razonar")
     type: str = Field(..., description="Tipo de dato (text, json, file, etc.)")
     desc: str = Field(..., description="Descripción técnica de lo ocurrido")
+
+class Preferences(BaseModel):
+    preferences: str = Field(..., description="Texto libre con preferencias o resumen")
 
 # 4. Helper para respuestas estandarizadas
 def create_response(raw_data: Any, markdown: str, desc: str, type_str: str = "json") -> AgentResponse:
