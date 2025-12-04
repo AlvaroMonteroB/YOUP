@@ -60,13 +60,26 @@ class Preferences(BaseModel):
     preferences: str = Field(..., description="Texto libre con preferencias o resumen")
 
 # 4. Helper para respuestas estandarizadas
-def create_response(raw_data: Any, markdown: str, desc: str, type_str: str = "json") -> AgentResponse:
-    return AgentResponse(
-        raw=raw_data,
-        markdown=markdown,
-        type=type_str,
-        desc=desc
-    )
+def responder(status_code: int, title: str, raw_data: Dict[str, Any]):
+    """
+    Estandariza la respuesta según tus requerimientos:
+    - Inyecta 'status': 'exito'/'error' en raw.
+    - Genera markdown y desc combinando title y mensaje.
+    - Retorna JSONResponse.
+    """
+    # Buscamos el mensaje en las claves comunes o usamos un default
+    mensaje = raw_data.get("mensaje") or raw_data.get("msgRetorno") or "Operación completada."
+    
+    # Determinamos status basado en el código HTTP
+    status_str = "error" if status_code >= 400 else "exito"
+    
+    return JSONResponse(status_code=status_code, content={
+        "raw": {"status": status_str, **raw_data},
+        "markdown": f"**{title}**\n\n{mensaje}",
+        "type": "markdown",
+        "desc": f"**{title}**\n\n{mensaje}"
+    })
+
 
 # 5. Endpoints
 
@@ -88,7 +101,7 @@ async def save_lead(user: UserProfile):
 
         # Log de la acción
         logger.info(f"Intentando guardar/actualizar lead: {raw_phone} (Origen: {full_username})")
-
+        
         # Upsert en la base de datos
         result = await users_collection.update_one(
             {"phone_number": raw_phone},
