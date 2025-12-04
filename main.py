@@ -39,7 +39,7 @@ users_collection = db.users
 
 class UserProfile(BaseModel):
     function_call_username: str = Field(..., description="Identificador o teléfono del usuario (puede incluir prefijos con --)")
-    preferences: str = Field(..., description="Texto libre con preferencias o resumen")
+    #preferences: str = Field(..., description="Texto libre con preferencias o resumen")
     source: Optional[str] = Field("bot_marketing", description="Origen del lead")
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -75,6 +75,7 @@ def responder(status_code: int, title: str, raw_data: Dict[str, Any]):
 
 @app.post("/save-lead", response_model=AgentResponse)
 async def save_lead(user: UserProfile):
+    logger.info(f"Save lead: {user}")
     """
     Guarda información extrayendo el teléfono limpio.
     """
