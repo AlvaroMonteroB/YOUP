@@ -104,7 +104,7 @@ async def save_lead(user: UserProfile):
                 "id": str(result.upserted_id),
                 "action": "created",
                 "phone": raw_phone,
-                "mensaje": f"¡Hola! ¿En qué podemos ayudarle hoy?⁄n Estamos aquí para darte cualquier información a cerca de los productos que ofrecemos"
+                "mensaje": f"¡Hola! ¿En qué podemos ayudarle hoy?\n Estamos aquí para darte cualquier información a cerca de los productos que ofrecemos"
             }
             return responder(201, "Registro Exitoso", raw_data)
         else:
