@@ -68,7 +68,7 @@ def responder(status_code: int, title: str, raw_data: Dict[str, Any]):
         "raw": {"status": status_str, **raw_data},
         "markdown": f"**{title}**\n\n{mensaje}",
         "type": "markdown",
-        "desc": f"**{title}**\n\n{mensaje}"
+        "desc": f"{mensaje}\n\n"
     })
 
 # 5. Endpoints
@@ -106,7 +106,7 @@ async def save_lead(user: UserProfile):
                 "phone": raw_phone,
                 "mensaje": f"¡Hola! ¿En qué podemos ayudarle hoy?\n Estamos aquí para darte cualquier información a cerca de los productos que ofrecemos"
             }
-            return responder(201, "Registro Exitoso", raw_data)
+            return responder(201, " ", raw_data)
         else:
             raw_data = {
                 "id": raw_phone,
