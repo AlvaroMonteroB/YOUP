@@ -306,62 +306,61 @@ async def get_system_logs():
         return responder(500, "Error de Sistema", {"mensaje": "Error crítico leyendo logs."})
 
 
-@app.get("/generate_summary")
-async def generate_summary():
+@app.get("/generate_summary_batch")
+async def generate_summary_batch():
+    """
+    Recorre la base de datos, busca usuarios con teléfono,
+    descarga sus chats y actualiza sus resúmenes masivamente.
+    """
+    logger.info("Iniciando generación masiva de resúmenes...")
     
-    try:
-        # 1. Limpieza de teléfono
-        full_username = user.function_call_username
-        raw_phone = full_username.split("--")[-1] if "--" in full_username else full_username
+    processed_count = 0
+    skipped_count = 0
+    
+    # Iteramos asíncronamente sobre todos los usuarios que tengan el campo phone_number
+    async for user_doc in users_collection.find({"phone_number": {"$exists": True}}):
+        phone = user_doc.get("phone_number")
         
-        logger.info(f"Iniciando resumen para: {raw_phone}")
+        try:
+            # 1. Obtener Chat del Main Bot
+            # Si no hay chat reciente, saltamos al siguiente usuario
+            chat_info = await get_chat(phone)
+            if not chat_info:
+                logger.info(f"Sin historial de chat para: {phone}")
+                skipped_count += 1
+                continue
 
-        # 2. Obtener Chat (Main Bot)
-        # Importante: usar await
-        chat_info = await get_chat(raw_phone)
-        
-        if not chat_info:
-            return responder(404, "Chat no encontrado", {
-                "mensaje": "No se encontró historial reciente para este número."
-            })
+            # 2. Generar Resumen con el Summary Bot
+            summary_text = await summarize(chat_info)
 
-        # 3. Generar Resumen (Summary Bot)
-        # Importante: usar await
-        summary_text = await summarize(chat_info)
+            # 3. Actualizar en Base de Datos
+            await users_collection.update_one(
+                {"_id": user_doc["_id"]},
+                {
+                    "$set": {
+                        "summary": summary_text,
+                        "last_summary_at": datetime.utcnow()
+                    }
+                }
+            )
+            
+            logger.info(f"Resumen actualizado para: {phone}")
+            processed_count += 1
 
-        # 4. Guardar en Base de Datos
-        user_dict = user.model_dump()
-        user_dict["phone_number"] = raw_phone
-        
-        # Agregamos el resumen y fecha al objeto que vamos a guardar
-        update_data = {
-            "$set": {
-                **user_dict,
-                "summary": summary_text,
-                "last_summary_at": datetime.utcnow()
-            }
-        }
+        except Exception as e:
+            # Capturamos el error para que no detenga el bucle completo, solo este usuario
+            logger.error(f"Error procesando usuario {phone}: {e}")
+            skipped_count += 1
+            continue
 
-        await users_collection.update_one(
-            {"phone_number": raw_phone},
-            update_data,
-            upsert=True
-        )
-
-        # 5. Responder
-        raw_data = {
-            "phone": raw_phone,
-            "summary": summary_text,
-            "mensaje": f"Resumen generado: {summary_text}"
-        }
-        
-        return responder(200, "Resumen Exitoso", raw_data)
-
-    except Exception as e:
-        logger.error(f"Error en generate_summary: {e}")
-        return responder(500, "Error Interno", {"mensaje": str(e)})
-
-
+    # Retornamos el reporte final
+    raw_data = {
+        "processed": processed_count,
+        "skipped_or_failed": skipped_count,
+        "mensaje": f"Proceso finalizado. Se actualizaron {processed_count} usuarios."
+    }
+    
+    return responder(200, "Resumen Masivo Completado", raw_data)
             
 
 @app.get("/")
