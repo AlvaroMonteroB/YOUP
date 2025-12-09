@@ -130,8 +130,8 @@ async def get_chat(telefono_objetivo):
     # 1. Headers exactos del curl (Copiados tal cual)
     headers = {
         'Content-Type': 'application/json',
-        'cybertron-robot-key': 'RIwy2ZJ6%2FN%2B0pj3qwOqAhwt%2F6M8%3D',
-        'cybertron-robot-token': 'MTc2MzY5OTc3ODg1OApCVVBkK3VCMGJNTXVLOTk4TDZnL0FiSGtmZUE9'
+        'cybertron-robot-key': MAIN_AGENTID,
+        'cybertron-robot-token': MAIN_TOKEN
     }
 
     # 2. Payload completo coincidiendo con el --data-raw
