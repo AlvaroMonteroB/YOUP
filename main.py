@@ -76,7 +76,7 @@ def responder(status_code: int, title: str, raw_data: Dict[str, Any]):
         "desc": f"{mensaje}\n\n"
     })
 
-def get_chat(telefono_objetivo):
+async def get_chat(telefono_objetivo):
     """
     Obtiene el historial del MAIN BOT (donde ocurre la conversación).
     """
