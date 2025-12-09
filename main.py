@@ -3,7 +3,7 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 from datetime import datetime
 from typing import Optional, Any, Dict
-
+import httpx
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
@@ -307,7 +307,8 @@ async def get_system_logs():
 
 
 @app.get("/generate_summary")
-async def generate_summary()
+async def generate_summary():
+    
     try:
         # 1. Limpieza de teléfono
         full_username = user.function_call_username
