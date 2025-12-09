@@ -97,6 +97,10 @@ async def get_chat(telefono_objetivo):
     payload_list = {
         "username": AS_ACCOUNT,
         "filter_mode": 0,
+         "filter_user_code": "",
+        "create_start_time": "",
+        "create_end_time": "",
+        "message_source": "",
         "page": 1,
         "pagesize": 100 
     }
@@ -122,15 +126,30 @@ async def get_chat(telefono_objetivo):
 
             # 2. Obtener el detalle (los mensajes)
             url_detail = 'https://agents.dyna.ai/openapi/v1/conversation/segment/detail_list/'
-            payload_detail = {
-                "username": AS_ACCOUNT,
-                "segment_code": segment_code,
-                "page": 1,
-                "pagesize": 50
-            }
 
-            resp_detail = await client.post(url_detail, headers=headers, json=payload_detail)
-            return resp_detail.json() # Retorna el JSON completo del chat
+    # 1. Headers exactos del curl (Copiados tal cual)
+    headers = {
+        'Content-Type': 'application/json',
+        'cybertron-robot-key': 'RIwy2ZJ6%2FN%2B0pj3qwOqAhwt%2F6M8%3D',
+        'cybertron-robot-token': 'MTc2MzY5OTc3ODg1OApCVVBkK3VCMGJNTXVLOTk4TDZnL0FiSGtmZUE9'
+    }
+
+    # 2. Payload completo coincidiendo con el --data-raw
+    # Nota: Agregué los campos vacíos que faltaban y ajusté el pagesize a 20 como el curl
+    payload_detail = {
+        "username": AS_ACCOUNT, # Asegúrate de que esta variable sea "juan.calderon@dyna.ai"
+        "segment_code": segment_code,
+        "create_start_time": "",
+        "create_end_time": "",
+        "message_source": "",
+        "question": "",
+        "page": 1,
+        "pagesize": 20 
+    }
+
+    # 3. Petición
+    resp_detail = await client.post(url_detail, headers=headers, json=payload_detail)
+    return resp_detail.json()
 
         except Exception as e:
             logger.error(f"Error en get_chat: {e}")
