@@ -14,7 +14,12 @@ from dotenv import load_dotenv
 load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 LOG_FILE_PATH = "logs/app.log"
-
+#main bot
+MAIN_TOKEN=os.getenv("MAIN_TOKEN")
+MAIN_AGENTID=os.getenv("MAIN_AGENTID")
+#Bot de summary
+SUMM_TOKEN=os.getenv("SUMM_TOKEN")
+SUMM_AGENTID=os.getenv("SUMM_AGENTID")
 # --- CONFIGURACIÓN DE LOGS ---
 if not os.path.exists("logs"):
     os.makedirs("logs")
@@ -70,6 +75,127 @@ def responder(status_code: int, title: str, raw_data: Dict[str, Any]):
         "type": "markdown",
         "desc": f"{mensaje}\n\n"
     })
+
+def get_chat(telefono_objetivo):
+    """
+    Obtiene el historial del MAIN BOT (donde ocurre la conversación).
+    """
+    # Credenciales del MAIN BOT
+    MAIN_AGENTID = os.getenv("MAIN_AGENTID")
+    MAIN_TOKEN = os.getenv("MAIN_TOKEN")
+    AS_ACCOUNT = os.getenv("AS_ACCOUNT")
+    
+    url_list = 'https://agents.dyna.ai/openapi/v1/conversation/segment/get_list/'
+    
+    headers = {
+        'Content-Type': 'application/json',
+        'cybertron-robot-key': MAIN_AGENTID,
+        'cybertron-robot-token': MAIN_TOKEN
+    }
+    
+    # 1. Buscar la conversación en la lista
+    payload_list = {
+        "username": AS_ACCOUNT,
+        "filter_mode": 0,
+        "page": 1,
+        "pagesize": 100 
+    }
+
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        try:
+            resp_list = await client.post(url_list, headers=headers, json=payload_list)
+            data = resp_list.json()
+            
+            if data.get("code") != "000000":
+                logger.error(f"Error buscando chat: {data.get('message')}")
+                return None
+
+            # Filtrar por teléfono dentro del user_code
+            segment_code = None
+            for item in data.get("data", {}).get("list", []):
+                if telefono_objetivo in item.get("user_code", ""):
+                    segment_code = item.get("segment_code")
+                    break
+            
+            if not segment_code:
+                return None
+
+            # 2. Obtener el detalle (los mensajes)
+            url_detail = 'https://agents.dyna.ai/openapi/v1/conversation/segment/detail_list/'
+            payload_detail = {
+                "username": AS_ACCOUNT,
+                "segment_code": segment_code,
+                "page": 1,
+                "pagesize": 50
+            }
+
+            resp_detail = await client.post(url_detail, headers=headers, json=payload_detail)
+            return resp_detail.json() # Retorna el JSON completo del chat
+
+        except Exception as e:
+            logger.error(f"Error en get_chat: {e}")
+            return None
+
+def summarize(conversation):
+    """
+    Envía un texto (conversation) a la API del agente para obtener un resumen.
+    """
+    
+    # 1. Validar que tengamos datos para enviar
+    if not conversation:
+        logger.warning("Intento de resumir una conversación vacía.")
+        return "No hay datos para resumir."
+
+    # 2. Obtener credenciales (se cargan al inicio con load_dotenv)
+    AGENT_API_URL = os.getenv("AGENT_API_URL")
+    AGENT_KEY = SUMM_AGENTID
+    AGENT_TOKEN = SUMM_TOKEN
+    AS_ACCOUNT = os.getenv("AS_ACCOUNT")
+
+    # 3. Preparar la petición
+    headers = {
+        'Content-Type': 'application/json',
+        'cybertron-robot-key': AGENT_KEY,
+        'cybertron-robot-token': AGENT_TOKEN
+    }
+
+    payload = {
+        "username": AS_ACCOUNT,
+        "question": conversation  # Aquí va el texto/prompt construido
+    }
+
+    try:
+        # 4. Llamada a la API
+        # Nota: requests es síncrono. Si tu servidor tiene mucha carga, 
+        # considera usar 'httpx' para hacerlo async.
+        response = requests.post(AGENT_API_URL, headers=headers, json=payload, timeout=10)
+        
+        # Verificar códigos de error (4xx, 5xx)
+        response.raise_for_status()
+
+        # 5. Procesar respuesta
+        data = response.json()
+        
+        # Extraer la respuesta de forma segura
+        answer = data.get("data", {}).get("answer")
+        
+        if answer:
+            return answer
+        else:
+            logger.warning(f"La API respondió OK pero sin respuesta: {data}")
+            return "No se pudo generar el resumen."
+
+    except requests.exceptions.Timeout:
+        logger.error("Timeout al conectar con el agente de resúmenes.")
+        return "El servicio de resumen tardó demasiado en responder."
+        
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error de conexión al resumir: {e}")
+        return "Error de conexión con el servicio de IA."
+        
+    except Exception as e:
+        logger.error(f"Error inesperado en summarize: {e}")
+        return "Ocurrió un error interno al procesar el resumen."
 
 # 5. Endpoints
 
@@ -178,6 +304,64 @@ async def get_system_logs():
     except Exception as e:
         logger.error(f"Error al leer logs: {e}")
         return responder(500, "Error de Sistema", {"mensaje": "Error crítico leyendo logs."})
+
+
+@app.get("/generate_summary")
+async def generate_summary()
+    try:
+        # 1. Limpieza de teléfono
+        full_username = user.function_call_username
+        raw_phone = full_username.split("--")[-1] if "--" in full_username else full_username
+        
+        logger.info(f"Iniciando resumen para: {raw_phone}")
+
+        # 2. Obtener Chat (Main Bot)
+        # Importante: usar await
+        chat_info = await get_chat(raw_phone)
+        
+        if not chat_info:
+            return responder(404, "Chat no encontrado", {
+                "mensaje": "No se encontró historial reciente para este número."
+            })
+
+        # 3. Generar Resumen (Summary Bot)
+        # Importante: usar await
+        summary_text = await summarize(chat_info)
+
+        # 4. Guardar en Base de Datos
+        user_dict = user.model_dump()
+        user_dict["phone_number"] = raw_phone
+        
+        # Agregamos el resumen y fecha al objeto que vamos a guardar
+        update_data = {
+            "$set": {
+                **user_dict,
+                "summary": summary_text,
+                "last_summary_at": datetime.utcnow()
+            }
+        }
+
+        await users_collection.update_one(
+            {"phone_number": raw_phone},
+            update_data,
+            upsert=True
+        )
+
+        # 5. Responder
+        raw_data = {
+            "phone": raw_phone,
+            "summary": summary_text,
+            "mensaje": f"Resumen generado: {summary_text}"
+        }
+        
+        return responder(200, "Resumen Exitoso", raw_data)
+
+    except Exception as e:
+        logger.error(f"Error en generate_summary: {e}")
+        return responder(500, "Error Interno", {"mensaje": str(e)})
+
+
+            
 
 @app.get("/")
 async def health_check():
