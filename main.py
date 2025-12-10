@@ -93,7 +93,8 @@ async def get_chat(telefono_objetivo):
         'cybertron-robot-key': MAIN_AGENTID,
         'cybertron-robot-token': MAIN_TOKEN
     }
-    
+    logger.info(f"{MAIN_AGENTID} , {MAIN_TOKEN}")
+     
     # 1. Buscar la conversación en la lista
     payload_list = {
         "username": AS_ACCOUNT,
