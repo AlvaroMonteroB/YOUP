@@ -128,35 +128,35 @@ async def get_chat(telefono_objetivo):
             # 2. Obtener el detalle (los mensajes)
             url_detail = 'https://agents.dyna.ai/openapi/v1/conversation/segment/detail_list/'
 
-    # 1. Headers exactos del curl (Copiados tal cual)
-    headers = {
-        'Content-Type': 'application/json',
-        'cybertron-robot-key': MAIN_AGENTID,
-        'cybertron-robot-token': MAIN_TOKEN
-    }
+            # 1. Headers exactos del curl (Copiados tal cual)
+            headers = {
+                'Content-Type': 'application/json',
+                'cybertron-robot-key': MAIN_AGENTID,
+                'cybertron-robot-token': MAIN_TOKEN
+            }
 
-    # 2. Payload completo coincidiendo con el --data-raw
-    # Nota: Agregué los campos vacíos que faltaban y ajusté el pagesize a 20 como el curl
-    payload_detail = {
-        "username": AS_ACCOUNT, # Asegúrate de que esta variable sea "juan.calderon@dyna.ai"
-        "segment_code": segment_code,
-        "create_start_time": "",
-        "create_end_time": "",
-        "message_source": "",
-        "question": "",
-        "page": 1,
-        "pagesize": 20 
-    }
+            # 2. Payload completo coincidiendo con el --data-raw
+            # Nota: Agregué los campos vacíos que faltaban y ajusté el pagesize a 20 como el curl
+            payload_detail = {
+                "username": AS_ACCOUNT, # Asegúrate de que esta variable sea "juan.calderon@dyna.ai"
+                "segment_code": segment_code,
+                "create_start_time": "",
+                "create_end_time": "",
+                "message_source": "",
+                "question": "",
+                "page": 1,
+                "pagesize": 20 
+            }
 
-    # 3. Petición
-    resp_detail = await client.post(url_detail, headers=headers, json=payload_detail)
-    return resp_detail.json()
+            # 3. Petición
+            resp_detail = await client.post(url_detail, headers=headers, json=payload_detail)
+            return resp_detail.json()
 
         except Exception as e:
             logger.error(f"Error en get_chat: {e}")
             return None
 
-def summarize(conversation):
+async def summarize(conversation):
     """
     Envía un texto (conversation) a la API del agente para obtener un resumen.
     """
