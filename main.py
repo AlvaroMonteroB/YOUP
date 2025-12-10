@@ -9,6 +9,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
+import requests
 
 # 1. Cargar variables de entorno
 load_dotenv()
@@ -184,33 +185,32 @@ def summarize(conversation):
     }
 
     try:
-        # 4. Llamada a la API
-        # Nota: requests es síncrono. Si tu servidor tiene mucha carga, 
-        # considera usar 'httpx' para hacerlo async.
-        response = requests.post(AGENT_API_URL, headers=headers, json=payload, timeout=10)
-        
-        # Verificar códigos de error (4xx, 5xx)
-        response.raise_for_status()
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            # 4. Llamada a la API con httpx (asíncrono)
+            response = await client.post(AGENT_API_URL, headers=headers, json=payload)
+            
+            # Verificar códigos de error (4xx, 5xx)
+            response.raise_for_status()
 
-        # 5. Procesar respuesta
-        data = response.json()
-        
-        # Extraer la respuesta de forma segura
-        answer = data.get("data", {}).get("answer")
-        
-        if answer:
-            return answer
-        else:
-            logger.warning(f"La API respondió OK pero sin respuesta: {data}")
-            return "No se pudo generar el resumen."
+            # 5. Procesar respuesta
+            data = response.json()
+            
+            # Extraer la respuesta de forma segura
+            answer = data.get("data", {}).get("answer")
+            
+            if answer:
+                return answer
+            else:
+                logger.warning(f"La API respondió OK pero sin respuesta: {data}")
+                return "No se pudo generar el resumen."
 
-    except requests.exceptions.Timeout:
+    except httpx.TimeoutException:
         logger.error("Timeout al conectar con el agente de resúmenes.")
         return "El servicio de resumen tardó demasiado en responder."
         
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Error de conexión al resumir: {e}")
-        return "Error de conexión con el servicio de IA."
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Error HTTP al resumir: {e}")
+        return f"Error de la API de resumen: {e.response.status_code}"
         
     except Exception as e:
         logger.error(f"Error inesperado en summarize: {e}")
