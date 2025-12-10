@@ -343,6 +343,7 @@ async def generate_summary_batch():
         try:
             # 1. Obtener Chat del Main Bot
             # Si no hay chat reciente, saltamos al siguiente usuario
+            logger.info(f"Obteniendo chat {phone}")
             chat_info = await get_chat(phone)
             if not chat_info:
                 logger.info(f"Sin historial de chat para: {phone}")
@@ -350,6 +351,7 @@ async def generate_summary_batch():
                 continue
 
             # 2. Generar Resumen con el Summary Bot
+            logger.info(f"Obteniendo generando resumen {phone}")
             summary_text = await summarize(chat_info)
 
             # 3. Actualizar en Base de Datos
