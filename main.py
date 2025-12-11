@@ -114,7 +114,6 @@ async def get_chat(telefono_objetivo):
         try:
             resp_list = await client.post(url_list, headers=headers, json=payload_list)
             data = resp_list.json()
-            logger.info(resp_list.history)
             
             if data.get("code") != "000000":
                 logger.error(f"Error buscando chat: {data.get('message')}")
@@ -123,6 +122,7 @@ async def get_chat(telefono_objetivo):
             # Filtrar por teléfono dentro del user_code
             segment_code = None
             for item in data.get("data", {}).get("list", []):
+                logger.info(item.get("user_code"))
                 if telefono_objetivo in item.get("user_code", ""):
                     segment_code = item.get("segment_code")
                     break
