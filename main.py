@@ -284,6 +284,8 @@ async def get_lead(phone_number: str):
     if user:
         if "created_at" in user and isinstance(user["created_at"], datetime):
             user["created_at"] = user["created_at"].isoformat()
+        if "last_summary_at" in user and isinstance(user["last_summary_at"], datetime):
+            user["last_summary_at"] = user["last_summary_at"].isoformat()
 
         logger.info(f"Lead encontrado: {phone_number}")
         
