@@ -93,11 +93,11 @@ async def get_chat(telefono_objetivo):
         'cybertron-robot-key': MAIN_AGENTID,
         'cybertron-robot-token': MAIN_TOKEN
     }
-    logger.info(f"{MAIN_AGENTID} , {MAIN_TOKEN}")
+    #logger.info(f"{MAIN_AGENTID} , {MAIN_TOKEN}")
      
     # 1. Buscar la conversación en la lista
     payload_list = {
-        "username": AS_ACCOUNT,
+        "username": AS_ACCOUNT.strip(),
         "filter_mode": 0,
          "filter_user_code": "",
         "create_start_time": "",
@@ -111,6 +111,7 @@ async def get_chat(telefono_objetivo):
         try:
             resp_list = await client.post(url_list, headers=headers, json=payload_list)
             data = resp_list.json()
+            logger.info(resp_list.history)
             
             if data.get("code") != "000000":
                 logger.error(f"Error buscando chat: {data.get('message')}")
