@@ -82,9 +82,9 @@ async def get_chat(telefono_objetivo):
     Obtiene el historial del MAIN BOT (donde ocurre la conversación).
     """
     # Credenciales del MAIN BOT
-    MAIN_AGENTID = os.getenv("MAIN_AGENTID")
-    MAIN_TOKEN = os.getenv("MAIN_TOKEN")
-    AS_ACCOUNT = os.getenv("AS_ACCOUNT")
+    MAIN_AGENTID = os.getenv("MAIN_AGENTID").strip()
+    MAIN_TOKEN = os.getenv("MAIN_TOKEN").strip()
+    AS_ACCOUNT = os.getenv("AS_ACCOUNT").strip()
     
     url_list = 'https://agents.dyna.ai/openapi/v1/conversation/segment/get_list/'
     
