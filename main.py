@@ -104,7 +104,7 @@ async def get_chat(telefono_objetivo):
         "create_end_time": "",
         "message_source": "",
         "page": 1,
-        "pagesize": 100 
+        "pagesize": 20 
     }
 
     async with httpx.AsyncClient(timeout=15.0) as client:
