@@ -129,7 +129,7 @@ async def get_chat(telefono_objetivo):
             
             if not segment_code:
                 return None
-
+            logger.info(segment_code)
             # 2. Obtener el detalle (los mensajes)
             url_detail = 'https://agents.dyna.ai/openapi/v1/conversation/segment/detail_list/'
 
@@ -154,6 +154,7 @@ async def get_chat(telefono_objetivo):
             }
 
             # 3. Petición
+            logger.info("Obteniendo chat")
             resp_detail = await client.post(url_detail, headers=headers, json=payload_detail)
             return resp_detail.json()
 
