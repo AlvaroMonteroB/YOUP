@@ -269,7 +269,7 @@ async def save_lead(user: UserProfile):
         return responder(500, "Error Interno", {"mensaje": f"Error al guardar datos: {str(e)}"})
 
 
-@app.get("/get-lead/{phone_number}", response_model=AgentResponse)
+@app.get("/get-lead/{phone_number}")
 async def get_lead(phone_number: str):
     """
     Busca usuario y retorna formato estandarizado usando responder().
