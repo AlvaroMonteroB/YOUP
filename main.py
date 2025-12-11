@@ -114,7 +114,7 @@ async def get_chat(telefono_objetivo):
         try:
             resp_list = await client.post(url_list, headers=headers, json=payload_list)
             data = resp_list.json()
-            logger.info(data)
+            #logger.info(data)
             if data.get("code") != "000000":
                 logger.error(f"Error buscando chat: {data.get('message')}")
                 return None
