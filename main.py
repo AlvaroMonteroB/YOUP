@@ -143,7 +143,7 @@ async def get_chat(telefono_objetivo):
             # 2. Payload completo coincidiendo con el --data-raw
             # Nota: Agregué los campos vacíos que faltaban y ajusté el pagesize a 20 como el curl
             payload_detail = {
-                "username": AS_ACCOUNT, # Asegúrate de que esta variable sea "juan.calderon@dyna.ai"
+                "username": AS_ACCOUNT.strip(), 
                 "segment_code": segment_code,
                 "create_start_time": "",
                 "create_end_time": "",
