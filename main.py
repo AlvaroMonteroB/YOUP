@@ -144,7 +144,7 @@ async def get_chat(telefono_objetivo):
             # Nota: Agregué los campos vacíos que faltaban y ajusté el pagesize a 20 como el curl
             payload_detail = {
                 "username": AS_ACCOUNT.strip(), 
-                "segment_code": segment_code,
+                "segment_code": segment_code.strip(),
                 "create_start_time": "",
                 "create_end_time": "",
                 "message_source": "",
