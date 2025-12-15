@@ -180,8 +180,8 @@ async def summarize(conversation):
     # 3. Preparar la petición
     headers = {
         'Content-Type': 'application/json',
-        'cybertron-robot-key': AGENT_KEY,
-        'cybertron-robot-token': AGENT_TOKEN
+        'cybertron-robot-key': MAIN_AGENTID,
+        'cybertron-robot-token': MAIN_TOKEN
     }
 
     payload = {
