@@ -144,7 +144,7 @@ async def get_chat(telefono_objetivo):
             # Nota: Agregué los campos vacíos que faltaban y ajusté el pagesize a 20 como el curl
             payload_detail = {
                 "username": AS_ACCOUNT.strip(), 
-                "segment_code": segment_code.strip(),
+                "segment_code": segment_code,
                 "create_start_time": "",
                 "create_end_time": "",
                 "message_source": "",
@@ -173,15 +173,15 @@ async def summarize(conversation):
 
     # 2. Obtener credenciales (se cargan al inicio con load_dotenv)
     AGENT_API_URL = os.getenv("AGENT_API_URL")
-    AGENT_KEY = SUMM_AGENTID
-    AGENT_TOKEN = SUMM_TOKEN
+    AGENT_KEY = SUMM_AGENTID.strip()
+    AGENT_TOKEN = SUMM_TOKEN.strip()
     AS_ACCOUNT = os.getenv("AS_ACCOUNT")
 
     # 3. Preparar la petición
     headers = {
         'Content-Type': 'application/json',
-        'cybertron-robot-key': MAIN_AGENTID,
-        'cybertron-robot-token': MAIN_TOKEN
+        'cybertron-robot-key': AGENT_KEY,
+        'cybertron-robot-token': AGENT_TOKEN
     }
 
     payload = {
