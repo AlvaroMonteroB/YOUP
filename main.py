@@ -78,73 +78,74 @@ def responder(status_code: int, title: str, raw_data: Dict[str, Any]):
     })
 
 async def get_chat(telefono_objetivo):
-    """
-    Obtiene el historial del MAIN BOT (donde ocurre la conversación).
-    """
-    # Credenciales del MAIN BOT
-    MAIN_AGENTID = os.getenv("MAIN_AGENTID")
-    MAIN_TOKEN = os.getenv("MAIN_TOKEN")
-    AS_ACCOUNT = os.getenv("AS_ACCOUNT")
-    MAIN_AGENTID=MAIN_AGENTID.strip()
-    MAIN_TOKEN=MAIN_TOKEN.strip()
-    AS_ACCOUNT=AS_ACCOUNT.strip()
-    
-    url_list = 'https://agents.dyna.ai/openapi/v1/conversation/segment/get_list/'
+    # --- CARGA DE CREDENCIALES ---
+    MAIN_AGENTID = os.getenv("MAIN_AGENTID", "").strip()
+    MAIN_TOKEN = os.getenv("MAIN_TOKEN", "").strip()
+    AS_ACCOUNT = os.getenv("AS_ACCOUNT", "").strip()
     
     headers = {
         'Content-Type': 'application/json',
         'cybertron-robot-key': MAIN_AGENTID,
         'cybertron-robot-token': MAIN_TOKEN
     }
-    #logger.info(f"{MAIN_AGENTID} , {MAIN_TOKEN}")
-     
-    # 1. Buscar la conversación en la lista
-    payload_list = {
-        "username": AS_ACCOUNT.strip(),
-        "filter_mode": 0,
-         "filter_user_code": "",
-        "create_start_time": "",
-        "create_end_time": "",
-        "message_source": "",
-        "page": 1,
-        "pagesize": 20 
-    }
 
     async with httpx.AsyncClient(timeout=15.0) as client:
+        # ==========================================
+        # PASO 1: GET LIST (ESTA PARTE YA FUNCIONA)
+        # ==========================================
+        url_list = 'https://agents.dyna.ai/openapi/v1/conversation/segment/get_list/'
+        payload_list = {
+            "username": AS_ACCOUNT,
+            "filter_mode": 0,
+            "filter_user_code": "", 
+            "page": 1,
+            "pagesize": 20 
+        }
+
         try:
             resp_list = await client.post(url_list, headers=headers, json=payload_list)
-            data = resp_list.json()
-            #logger.info(data)
-            if data.get("code") != "000000":
-                logger.error(f"Error buscando chat: {data.get('message')}")
-                return None
+            data_list = resp_list.json()
+            
+            # Verificación rápida
+            if data_list.get("code") != "000000":
+                logger.error(f"Error en Lista: {data_list}")
+                return []
 
-            # Filtrar por teléfono dentro del user_code
+            lista_chats = data_list.get("data", {}).get("list", [])
+            logger.info(f"Chats encontrados: {len(lista_chats)}")
+
+            # ==========================================
+            # PASO INTERMEDIO: ENCONTRAR EL SEGMENT_CODE
+            # ==========================================
             segment_code = None
-            for item in data.get("data", {}).get("list", []):
-                logger.info(item.get("user_code"))
-                if telefono_objetivo in item.get("user_code", ""):
+            
+            # Limpiamos el teléfono objetivo para asegurar el match
+            phone_clean = telefono_objetivo.replace(" ", "").replace("+", "") 
+
+            print(f"--- BUSCANDO: {phone_clean} ---")
+            
+            for item in lista_chats:
+                user_code = item.get("user_code", "")
+                
+                # Buscamos si el teléfono limpio está dentro del user_code
+                if phone_clean in user_code:
                     segment_code = item.get("segment_code")
-                    break
+                    # IMPRIMIR PARA DEPURAR: ¿Cuál estamos agarrando?
+                    print(f"✅ MATCH: User: {user_code} | Segment: {segment_code}")
+                    break # <--- OJO: Esto agarra solo el PRIMER chat encontrado.
             
             if not segment_code:
-                return None
-            logger.info(f"Segment code obtenido: {segment_code}")
-            # 2. Obtener el detalle (los mensajes)
+                logger.error(f"❌ No se encontró ningún chat para el teléfono {telefono_objetivo}")
+                return []
+
+            # ==========================================
+            # PASO 2: DETAIL LIST (AQUÍ ESTÁ EL FALLO)
+            # ==========================================
             url_detail = 'https://agents.dyna.ai/openapi/v1/conversation/segment/detail_list/'
 
-            # 1. Headers exactos del curl (Copiados tal cual)
-            headers = {
-                'Content-Type': 'application/json',
-                'cybertron-robot-key': MAIN_AGENTID,
-                'cybertron-robot-token': MAIN_TOKEN
-            }
-
-            # 2. Payload completo coincidiendo con el --data-raw
-            # Nota: Agregué los campos vacíos que faltaban y ajusté el pagesize a 20 como el curl
             payload_detail = {
-                "username": AS_ACCOUNT.strip(), 
-                "segment_code": segment_code,
+                "username": AS_ACCOUNT, 
+                "segment_code": segment_code, # Aseguramos que esto no sea None
                 "create_start_time": "",
                 "create_end_time": "",
                 "message_source": "",
@@ -153,12 +154,22 @@ async def get_chat(telefono_objetivo):
                 "pagesize": 20 
             }
 
-            # 3. Petición
+            # DEBUG CRÍTICO: Imprime esto y compáralo con el Body de Postman
+            print(f"📨 ENVIANDO PAYLOAD DETALLE: {json.dumps(payload_detail, indent=2)}")
+
             resp_detail = await client.post(url_detail, headers=headers, json=payload_detail)
-            return resp_detail.json()
+            data_detail = resp_detail.json()
+            
+            if data_detail.get("code") != "000000":
+                logger.error(f"❌ Error API Detalle: {data_detail}")
+            else:
+                total_msgs = data_detail.get("data", {}).get("total", 0)
+                print(f"✅ ÉXITO: Mensajes recuperados: {total_msgs}")
+
+            return data_detail
 
         except Exception as e:
-            logger.error(f"Error en get_chat: {e}")
+            logger.error(f"Excepción: {e}")
             return None
 
 async def summarize(conversation):
