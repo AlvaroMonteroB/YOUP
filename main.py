@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 import requests
+import json
 
 # 1. Cargar variables de entorno
 load_dotenv()
