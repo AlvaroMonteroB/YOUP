@@ -91,9 +91,9 @@ async def get_chat(telefono_objetivo):
     }
 
     async with httpx.AsyncClient(timeout=15.0) as client:
-        # ---------------------------------------------------------
-        # PASO 1: OBTENER LISTA DE TODOS LOS CHATS
-        # ---------------------------------------------------------
+        # ==========================================
+        # PASO 1: GET LIST 
+        # ==========================================
         url_list = 'https://agents.dyna.ai/openapi/v1/conversation/segment/get_list/'
         payload_list = {
             "username": AS_ACCOUNT,
@@ -108,45 +108,38 @@ async def get_chat(telefono_objetivo):
             data_list = resp_list.json()
             
             if data_list.get("code") != "000000":
-                logger.error(f"Error obteniendo lista: {data_list}")
+                logger.error(f"Error en Lista: {data_list}")
                 return []
 
-            lista_todos = data_list.get("data", {}).get("list", [])
+            lista_chats = data_list.get("data", {}).get("list", [])
+            logger.info(f"Chats encontrados: {len(lista_chats)}")
+
+            # ==========================================
+            # PASO INTERMEDIO: ENCONTRAR EL SEGMENT_CODE
+            # ==========================================
+            segment_code = None
             
-            # ---------------------------------------------------------
-            # PASO CRÍTICO: FILTRAR Y ORDENAR
-            # ---------------------------------------------------------
+            # Limpieza básica para buscar match parcial
             phone_clean = telefono_objetivo.replace(" ", "").replace("+", "") 
-            
-            # 1. Buscamos TODOS los segmentos que coincidan con el teléfono
-            candidatos = []
-            for item in lista_todos:
-                user_code = item.get("user_code", "")
-                if phone_clean in user_code:
-                    candidatos.append(item)
-            
-            if not candidatos:
-                logger.warning(f"No se encontraron chats para: {phone_clean}")
-                return []
-            
-            # 2. Ordenamos por fecha (create_time) descendente (del más nuevo al más viejo)
-            # Asumimos formato "YYYY-MM-DD HH:MM:SS" que se ordena bien como string
-            candidatos_ordenados = sorted(
-                candidatos, 
-                key=lambda x: x.get('create_time', ''), 
-                reverse=True
-            )
-            
-            # 3. Tomamos el más reciente
-            mejor_match = candidatos_ordenados[0]
-            segment_code = mejor_match.get("segment_code")
-            
-            print(f"🔎 Encontrados {len(candidatos)} chats para este número.")
-            print(f"✅ Usando el más reciente: {mejor_match.get('create_time')} | Code: {segment_code}")
 
-            # ---------------------------------------------------------
-            # PASO 2: OBTENER DETALLE
-            # ---------------------------------------------------------
+            print(f"--- BUSCANDO TELÉFONO: {phone_clean} ---")
+            
+            for item in lista_chats:
+                user_code = item.get("user_code", "")
+                
+                # Buscamos si el teléfono limpio está dentro del user_code
+                if phone_clean in user_code:
+                    segment_code = item.get("segment_code")
+                    print(f"✅ MATCH ENCONTRADO: User: {user_code} | Segment Code: {segment_code}")
+                    break 
+            
+            if not segment_code:
+                logger.error(f"❌ No se encontró ningún chat que contenga {phone_clean}")
+                return []
+
+            # ==========================================
+            # PASO 2: DETAIL LIST
+            # ==========================================
             url_detail = 'https://agents.dyna.ai/openapi/v1/conversation/segment/detail_list/'
 
             payload_detail = {
@@ -160,11 +153,25 @@ async def get_chat(telefono_objetivo):
                 "pagesize": 20 
             }
 
+            # IMPRIMIR PAYLOAD PARA VERIFICAR CONTRA POSTMAN
+            print(f"📨 ENVIANDO PAYLOAD DETALLE:\n{json.dumps(payload_detail, indent=2)}")
+
             resp_detail = await client.post(url_detail, headers=headers, json=payload_detail)
-            return resp_detail.json()
+            data_detail = resp_detail.json()
+            
+            # IMPRIMIR RESPUESTA DE LA API
+            # print(f"📩 RESPUESTA DETALLE:\n{json.dumps(data_detail, indent=2)}")
+
+            if data_detail.get("code") != "000000":
+                logger.error(f"❌ Error API Detalle: {data_detail}")
+            else:
+                total_msgs = data_detail.get("data", {}).get("total", 0)
+                print(f"✅ ÉXITO FINAL: Mensajes recuperados: {total_msgs}")
+
+            return data_detail
 
         except Exception as e:
-            logger.error(f"Excepción: {e}")
+            logger.error(f"Excepción general: {e}")
             return None
 
 async def summarize(conversation):
