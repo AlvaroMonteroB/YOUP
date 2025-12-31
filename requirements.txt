@@ -6,4 +6,3 @@ pydantic
 email-validator
 httpx
 requests
-json
