@@ -79,74 +79,100 @@ def responder(status_code: int, title: str, raw_data: Dict[str, Any]):
     })
 
 async def get_chat(telefono_objetivo):
-    # --- CARGA DE CREDENCIALES ---
-    MAIN_AGENTID = os.getenv("MAIN_AGENTID", "").strip()
-    MAIN_TOKEN = os.getenv("MAIN_TOKEN", "").strip()
-    AS_ACCOUNT = os.getenv("AS_ACCOUNT", "").strip()
-    
-    headers = {
-        'Content-Type': 'application/json',
-        'cybertron-robot-key': MAIN_AGENTID,
-        'cybertron-robot-token': MAIN_TOKEN
-    }
+    """
+    Obtiene el historial del MAIN BOT.
+    Args:
+        telefono_objetivo (str): Número de teléfono (ej: '525510609610' o '+525510609610')
+    """
+    try:
+        # 1. Carga y Limpieza AGRESIVA de credenciales
+        # A veces .env carga comillas extra o saltos de linea que rompen la API
+        MAIN_AGENTID = os.getenv("MAIN_AGENTID", "").replace('"', '').replace("'", "").strip()
+        MAIN_TOKEN = os.getenv("MAIN_TOKEN", "").replace('"', '').replace("'", "").strip()
+        AS_ACCOUNT = os.getenv("AS_ACCOUNT", "").replace('"', '').replace("'", "").strip()
 
-    async with httpx.AsyncClient(timeout=15.0) as client:
-        # ==========================================
-        # PASO 1: GET LIST (ESTA PARTE YA FUNCIONA)
-        # ==========================================
+        # Validación rápida para no hacer petición si faltan datos
+        if not all([MAIN_AGENTID, MAIN_TOKEN, AS_ACCOUNT]):
+            logger.error("Faltan credenciales en variables de entorno")
+            return None
+
+        # Headers comunes
+        headers = {
+            'Content-Type': 'application/json',
+            'cybertron-robot-key': MAIN_AGENTID,
+            'cybertron-robot-token': MAIN_TOKEN
+        }
+
+        # ---------------------------------------------------------
+        # PASO 1: OBTENER LISTA DE CHATS
+        # ---------------------------------------------------------
         url_list = 'https://agents.dyna.ai/openapi/v1/conversation/segment/get_list/'
+        
         payload_list = {
-            "username": AS_ACCOUNT,
+            "username": AS_ACCOUNT, # Ya limpio
             "filter_mode": 0,
-            "filter_user_code": "", 
+            "filter_user_code": "",
+            "create_start_time": "",
+            "create_end_time": "",
+            "message_source": "",
             "page": 1,
             "pagesize": 20 
         }
 
-        try:
+        # Debug: Ver exactamente qué enviamos (comparar con Postman)
+        # logger.info(f"Enviando Payload List: {json.dumps(payload_list)}")
+
+        async with httpx.AsyncClient(timeout=15.0) as client:
             resp_list = await client.post(url_list, headers=headers, json=payload_list)
-            data_list = resp_list.json()
+            resp_list.raise_for_status() # Lanza error si no es 200 OK
             
-            # Verificación rápida
-            if data_list.get("code") != "000000":
-                logger.error(f"Error en Lista: {data_list}")
-                return []
+            data = resp_list.json()
 
-            lista_chats = data_list.get("data", {}).get("list", [])
-            logger.info(f"Chats encontrados: {len(lista_chats)}")
+            if data.get("code") != "000000":
+                logger.error(f"API Error Code: {data.get('code')} - {data.get('message')}")
+                return None
 
-            # ==========================================
-            # PASO INTERMEDIO: ENCONTRAR EL SEGMENT_CODE
-            # ==========================================
+            lista_chats = data.get("data", {}).get("list", [])
+            
+            # Debug: Ver cuántos chats devolvió la API
+            logger.info(f"Chats encontrados en la cuenta {AS_ACCOUNT}: {len(lista_chats)}")
+            
+            if not lista_chats:
+                logger.warning("La API devolvió una lista vacía. Verifica que AS_ACCOUNT coincida con el Postman.")
+                return None
+
+            # ---------------------------------------------------------
+            # FILTRADO INTELIGENTE DEL TELÉFONO
+            # ---------------------------------------------------------
+            # Limpiamos el telefono objetivo de espacios o guiones para buscar mejor
+            phone_clean = telefono_objetivo.replace(" ", "").replace("-", "").strip()
+            # Si el input no trae '+', probamos buscar con y sin él si es necesario, 
+            # pero 'in' suele ser suficiente si user_code es largo.
+            
             segment_code = None
-            
-            # Limpiamos el teléfono objetivo para asegurar el match
-            phone_clean = telefono_objetivo.replace(" ", "").replace("+", "") 
-
-            print(f"--- BUSCANDO: {phone_clean} ---")
             
             for item in lista_chats:
                 user_code = item.get("user_code", "")
+                # Log para ver contra qué estamos comparando
+                # logger.info(f"Comparando {phone_clean} en {user_code}")
                 
-                # Buscamos si el teléfono limpio está dentro del user_code
                 if phone_clean in user_code:
                     segment_code = item.get("segment_code")
-                    # IMPRIMIR PARA DEPURAR: ¿Cuál estamos agarrando?
-                    print(f"✅ MATCH: User: {user_code} | Segment: {segment_code}")
-                    break # <--- OJO: Esto agarra solo el PRIMER chat encontrado.
+                    logger.info(f"MATCH ENCONTRADO: {segment_code} para usuario {user_code}")
+                    break
             
             if not segment_code:
-                logger.error(f"❌ No se encontró ningún chat para el teléfono {telefono_objetivo}")
-                return []
+                logger.warning(f"No se encontró chat para el teléfono: {telefono_objetivo}")
+                return None
 
-            # ==========================================
-            # PASO 2: DETAIL LIST (AQUÍ ESTÁ EL FALLO)
-            # ==========================================
+            # ---------------------------------------------------------
+            # PASO 2: OBTENER DETALLE
+            # ---------------------------------------------------------
             url_detail = 'https://agents.dyna.ai/openapi/v1/conversation/segment/detail_list/'
 
             payload_detail = {
                 "username": AS_ACCOUNT, 
-                "segment_code": segment_code, # Aseguramos que esto no sea None
+                "segment_code": segment_code,
                 "create_start_time": "",
                 "create_end_time": "",
                 "message_source": "",
@@ -155,23 +181,17 @@ async def get_chat(telefono_objetivo):
                 "pagesize": 20 
             }
 
-            # DEBUG CRÍTICO: Imprime esto y compáralo con el Body de Postman
-            print(f"📨 ENVIANDO PAYLOAD DETALLE: {json.dumps(payload_detail, indent=2)}")
-
             resp_detail = await client.post(url_detail, headers=headers, json=payload_detail)
-            data_detail = resp_detail.json()
+            resp_detail.raise_for_status()
             
-            if data_detail.get("code") != "000000":
-                logger.error(f"❌ Error API Detalle: {data_detail}")
-            else:
-                total_msgs = data_detail.get("data", {}).get("total", 0)
-                print(f"✅ ÉXITO: Mensajes recuperados: {total_msgs}")
+            return resp_detail.json()
 
-            return data_detail
-
-        except Exception as e:
-            logger.error(f"Excepción: {e}")
-            return None
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Error HTTP: {e.response.status_code} - {e.response.text}")
+        return None
+    except Exception as e:
+        logger.error(f"Excepción en get_chat: {e}")
+        return None
 
 async def summarize(conversation):
     """
