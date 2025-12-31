@@ -91,9 +91,9 @@ async def get_chat(telefono_objetivo):
     }
 
     async with httpx.AsyncClient(timeout=15.0) as client:
-        # ==========================================
-        # PASO 1: GET LIST (ESTA PARTE YA FUNCIONA)
-        # ==========================================
+        # ---------------------------------------------------------
+        # PASO 1: OBTENER LISTA DE TODOS LOS CHATS
+        # ---------------------------------------------------------
         url_list = 'https://agents.dyna.ai/openapi/v1/conversation/segment/get_list/'
         payload_list = {
             "username": AS_ACCOUNT,
@@ -107,46 +107,51 @@ async def get_chat(telefono_objetivo):
             resp_list = await client.post(url_list, headers=headers, json=payload_list)
             data_list = resp_list.json()
             
-            # Verificación rápida
             if data_list.get("code") != "000000":
-                logger.error(f"Error en Lista: {data_list}")
+                logger.error(f"Error obteniendo lista: {data_list}")
                 return []
 
-            lista_chats = data_list.get("data", {}).get("list", [])
-            logger.info(f"Chats encontrados: {len(lista_chats)}")
-
-            # ==========================================
-            # PASO INTERMEDIO: ENCONTRAR EL SEGMENT_CODE
-            # ==========================================
-            segment_code = None
+            lista_todos = data_list.get("data", {}).get("list", [])
             
-            # Limpiamos el teléfono objetivo para asegurar el match
+            # ---------------------------------------------------------
+            # PASO CRÍTICO: FILTRAR Y ORDENAR
+            # ---------------------------------------------------------
             phone_clean = telefono_objetivo.replace(" ", "").replace("+", "") 
-
-            print(f"--- BUSCANDO: {phone_clean} ---")
             
-            for item in lista_chats:
+            # 1. Buscamos TODOS los segmentos que coincidan con el teléfono
+            candidatos = []
+            for item in lista_todos:
                 user_code = item.get("user_code", "")
-                
-                # Buscamos si el teléfono limpio está dentro del user_code
                 if phone_clean in user_code:
-                    segment_code = item.get("segment_code")
-                    # IMPRIMIR PARA DEPURAR: ¿Cuál estamos agarrando?
-                    print(f"✅ MATCH: User: {user_code} | Segment: {segment_code}")
-                    break # <--- OJO: Esto agarra solo el PRIMER chat encontrado.
+                    candidatos.append(item)
             
-            if not segment_code:
-                logger.error(f"❌ No se encontró ningún chat para el teléfono {telefono_objetivo}")
+            if not candidatos:
+                logger.warning(f"No se encontraron chats para: {phone_clean}")
                 return []
+            
+            # 2. Ordenamos por fecha (create_time) descendente (del más nuevo al más viejo)
+            # Asumimos formato "YYYY-MM-DD HH:MM:SS" que se ordena bien como string
+            candidatos_ordenados = sorted(
+                candidatos, 
+                key=lambda x: x.get('create_time', ''), 
+                reverse=True
+            )
+            
+            # 3. Tomamos el más reciente
+            mejor_match = candidatos_ordenados[0]
+            segment_code = mejor_match.get("segment_code")
+            
+            print(f"🔎 Encontrados {len(candidatos)} chats para este número.")
+            print(f"✅ Usando el más reciente: {mejor_match.get('create_time')} | Code: {segment_code}")
 
-            # ==========================================
-            # PASO 2: DETAIL LIST (AQUÍ ESTÁ EL FALLO)
-            # ==========================================
+            # ---------------------------------------------------------
+            # PASO 2: OBTENER DETALLE
+            # ---------------------------------------------------------
             url_detail = 'https://agents.dyna.ai/openapi/v1/conversation/segment/detail_list/'
 
             payload_detail = {
                 "username": AS_ACCOUNT, 
-                "segment_code": segment_code, # Aseguramos que esto no sea None
+                "segment_code": segment_code,
                 "create_start_time": "",
                 "create_end_time": "",
                 "message_source": "",
@@ -155,19 +160,8 @@ async def get_chat(telefono_objetivo):
                 "pagesize": 20 
             }
 
-            # DEBUG CRÍTICO: Imprime esto y compáralo con el Body de Postman
-            print(f"📨 ENVIANDO PAYLOAD DETALLE: {json.dumps(payload_detail, indent=2)}")
-
             resp_detail = await client.post(url_detail, headers=headers, json=payload_detail)
-            data_detail = resp_detail.json()
-            
-            if data_detail.get("code") != "000000":
-                logger.error(f"❌ Error API Detalle: {data_detail}")
-            else:
-                total_msgs = data_detail.get("data", {}).get("total", 0)
-                print(f"✅ ÉXITO: Mensajes recuperados: {total_msgs}")
-
-            return data_detail
+            return resp_detail.json()
 
         except Exception as e:
             logger.error(f"Excepción: {e}")
