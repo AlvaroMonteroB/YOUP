@@ -91,9 +91,9 @@ async def get_chat(telefono_objetivo):
     }
 
     async with httpx.AsyncClient(timeout=15.0) as client:
-        # ==========================================
+        # ---------------------------------------------------------
         # PASO 1: OBTENER LISTA DE TODOS LOS CHATS
-        # ==========================================
+        # ---------------------------------------------------------
         url_list = 'https://agents.dyna.ai/openapi/v1/conversation/segment/get_list/'
         payload_list = {
             "username": AS_ACCOUNT,
@@ -107,7 +107,6 @@ async def get_chat(telefono_objetivo):
             resp_list = await client.post(url_list, headers=headers, json=payload_list)
             data_list = resp_list.json()
             
-            # Validación inicial
             if data_list.get("code") != "000000":
                 logger.error(f"Error obteniendo lista: {data_list}")
                 return []
@@ -115,10 +114,11 @@ async def get_chat(telefono_objetivo):
             lista_todos = data_list.get("data", {}).get("list", [])
             
             # ---------------------------------------------------------
-            # FILTRADO Y SELECCIÓN DEL MÁS RECIENTE
+            # PASO CRÍTICO: FILTRAR Y ORDENAR
             # ---------------------------------------------------------
             phone_clean = telefono_objetivo.replace(" ", "").replace("+", "") 
             
+            # 1. Buscamos TODOS los segmentos que coincidan con el teléfono
             candidatos = []
             for item in lista_todos:
                 user_code = item.get("user_code", "")
@@ -126,24 +126,27 @@ async def get_chat(telefono_objetivo):
                     candidatos.append(item)
             
             if not candidatos:
-                logger.warning(f"No se encontraron chats que coincidan con: {phone_clean}")
+                logger.warning(f"No se encontraron chats para: {phone_clean}")
                 return []
             
-            # Ordenamos por fecha descendente (el más nuevo primero)
+            # 2. Ordenamos por fecha (create_time) descendente (del más nuevo al más viejo)
+            # Asumimos formato "YYYY-MM-DD HH:MM:SS" que se ordena bien como string
             candidatos_ordenados = sorted(
                 candidatos, 
                 key=lambda x: x.get('create_time', ''), 
                 reverse=True
             )
             
+            # 3. Tomamos el más reciente
             mejor_match = candidatos_ordenados[0]
             segment_code = mejor_match.get("segment_code")
             
-            logger.info(f"Segmento seleccionado (más reciente): {segment_code} | Fecha: {mejor_match.get('create_time')}")
+            print(f"🔎 Encontrados {len(candidatos)} chats para este número.")
+            print(f"✅ Usando el más reciente: {mejor_match.get('create_time')} | Code: {segment_code}")
 
-            # ==========================================
-            # PASO 2: OBTENER DETALLE (CON LOG RECUPERADO)
-            # ==========================================
+            # ---------------------------------------------------------
+            # PASO 2: OBTENER DETALLE
+            # ---------------------------------------------------------
             url_detail = 'https://agents.dyna.ai/openapi/v1/conversation/segment/detail_list/'
 
             payload_detail = {
@@ -158,24 +161,10 @@ async def get_chat(telefono_objetivo):
             }
 
             resp_detail = await client.post(url_detail, headers=headers, json=payload_detail)
-            data_detail = resp_detail.json()
-
-            # --- LOG QUE NECESITABAS ---
-            # Imprime la respuesta exacta tal cual llega de la API
-            logger.info(f"Respuesta RAW API Detalle: {data_detail}")
-            # ---------------------------
-
-            # Verificación adicional para avisarte visualmente si está vacía
-            total_msgs = data_detail.get("data", {}).get("total", 0)
-            if total_msgs == 0:
-                logger.warning("⚠️ LA API RESPONDIÓ OK PERO LA LISTA DE MENSAJES ESTÁ VACÍA (total: 0)")
-            else:
-                logger.info(f"✅ Éxito: Se recuperaron {total_msgs} mensajes.")
-
-            return data_detail
+            return resp_detail.json()
 
         except Exception as e:
-            logger.error(f"Excepción crítica: {e}")
+            logger.error(f"Excepción: {e}")
             return None
 
 async def summarize(conversation):
