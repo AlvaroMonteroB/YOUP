@@ -11,6 +11,15 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 import requests
 import json
+from sqlalchemy import create_all, create_engine
+from sqlalchemy.orm import sessionmaker
+from motor.motor_asyncio import AsyncIOMotorClient
+"""
+sudo docker-compose up -d ---build
+
+"""
+
+
 
 # 1. Cargar variables de entorno
 load_dotenv()
@@ -42,7 +51,50 @@ client = AsyncIOMotorClient(MONGO_URI)
 db = client.marketing_db
 users_collection = db.users
 
+# --- CONFIG SQL (Nueva) ---
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+
 # 3. Modelos de Datos
+class VehicleSpec(Base):
+    __tablename__ = "especificaciones_vehiculos"
+    id = Column(Integer, primary_key=True, index=True)
+    modelo_interno = Column(String(50), unique=True)
+    nombre_comercial = Column(String(100))
+    autonomia_km = Column(String(150))
+    velocidad_maxima = Column(String(100))
+    tipo_motor = Column(String(100))
+    tipo_bateria = Column(String(100))
+    fecha_creacion = Column(DateTime, default=datetime.datetime.utcnow)
+
+# TABLA 2: Dispositivos Móviles
+class MobileDevice(Base):
+    __tablename__ = "dispositivos_moviles"
+    id = Column(Integer, primary_key=True, index=True)
+    marca = Column(String(50))      # Xiaomi, HONOR
+    categoria = Column(String(50))  # Smartphone, Tablet
+    modelo = Column(String(100))    # Redmi Note 13
+    pantalla = Column(Text)
+    procesador = Column(String(150))
+    memoria = Column(String(150))
+    bateria = Column(String(100))
+    carga = Column(String(100))
+    camaras = Column(Text)
+    sistema_operativo = Column(String(100))
+    extras = Column(Text)
+    precio_promocion = Column(String(50))
+    fecha_creacion = Column(DateTime, default=datetime.datetime.utcnow)
+
+
+class QueryRequest(BaseModel):
+    question: str
+    function_call_username: Optional[str] = None
+
+class SqlRequest(BaseModel):
+    sql: str
 
 class UserProfile(BaseModel):
     function_call_username: str = Field(..., description="Identificador o teléfono del usuario (puede incluir prefijos con --)")
@@ -56,6 +108,8 @@ class AgentResponse(BaseModel):
     markdown: str
     type: str
     desc: str
+
+
 
 # 4. Helper de Respuesta (Tu nuevo método)
 def responder(status_code: int, title: str, raw_data: Dict[str, Any]):
@@ -421,6 +475,162 @@ async def generate_summary_batch():
     }
     
     return responder(200, "Resumen Masivo Completado", raw_data)
+
+
+def responder(status_code: int, title: str, raw_data: Dict[str, Any]):
+    mensaje = raw_data.get("mensaje") or raw_data.get("msgRetorno") or "Operación completada."
+    status_str = "error" if status_code >= 400 else "exito"
+    
+    return JSONResponse(status_code=status_code, content={
+        "raw": {"status": status_str, **raw_data},
+        "markdown": f"**{title}**\n\n{mensaje}",
+        "type": "markdown",
+        "desc": f"{mensaje}\n\n"
+    })
+
+async def enviar_whatsapp_logic(phone: str, image_url: str):
+    """Simulación de envío de WhatsApp"""
+    logger.info(f"--- ENVIANDO WHATSAPP a {phone}: {image_url} ---")
+    # Aquí tu código real de Twilio/Meta
+    pass
+
+async def call_agent_api(prompt: str) -> str:
+    """Función auxiliar para llamar al agente y obtener texto limpio"""
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            AGENT_API_URL,
+            headers={
+                'Content-Type': 'application/json',
+                'cybertron-robot-key': QUERY_KEY,   # Usando las keys solicitadas
+                'cybertron-robot-token': QUERY_TOKEN
+            },
+            json={"username": AS_ACCOUNT, "question": prompt},
+            timeout=45.0 # Un poco más de tiempo para análisis
+        )
+        response.raise_for_status()
+        data = response.json()
+        return data.get("data", {}).get("answer", "")
+
+# --- 4. ENDPOINT PRINCIPAL ---
+
+@app.post("/query-generator")
+async def query_generator(request: QueryRequest, db: Session = Depends(get_db)):
+    question = request.question
+    
+    # --- VALIDACIÓN INICIAL ---
+    if not question or not isinstance(question, str) or not question.strip():
+        return JSONResponse(status_code=400, content={
+            "raw": {"error": "Bad Request", "details": 'El campo "question" es requerido.'},
+            "markdown": "No hay datos.", "type": "markdown", "desc": "⚠️ Error: Pregunta vacía."
+        })
+
+    try:
+        logger.info(f"1. Iniciando proceso para: {question}")
+
+        # ==============================================================================
+        # PASO 1: NLP -> SQL (Llamada al Agente)
+        # ==============================================================================
+        schema_prompt = f"""
+        Actúa como un ingeniero de datos experto. Convierte la siguiente pregunta en lenguaje natural a una consulta SQL PostgreSQL válida.
+        
+        ESQUEMA DE TABLAS:
+        - marcas (id_marca, nombre_marca)
+        - modelos (id_modelo, id_marca, nombre_modelo)
+        - pictures (id, url) -> IMPORTANTE: El resultado debe incluir 'image_url' si existe.
+        - especificaciones (id_especificacion, id_modelo, bateria_v_ah, potencia_w, velocidad_maxima_km_h, rango_km, peso_neto_kg...)
+        - precios (id_precio, id_modelo, minorista_mxn)
+
+        Pregunta: "{question}"
+
+        REGLAS:
+        1. Devuelve SOLO el código SQL (SELECT).
+        2. No uses Markdown (```sql).
+        3. Si no puedes, devuelve "ERROR".
+        """
+        
+        sql_generated = await call_agent_api(schema_prompt)
+        
+        # Limpieza de la respuesta del agente
+        sql_clean = sql_generated.replace("```sql", "").replace("```", "").replace(";", "").strip()
+        
+        if not sql_clean.upper().startswith("SELECT"):
+            raise Exception(f"El agente no generó un SQL válido: {sql_clean}")
+
+        logger.info(f"2. SQL Generado: {sql_clean}")
+
+        # ==============================================================================
+        # PASO 2: EJECUTAR SQL EN BASE DE DATOS
+        # ==============================================================================
+        result_proxy = db.execute(text(sql_clean))
+        keys = result_proxy.keys()
+        db_results = [dict(zip(keys, row)) for row in result_proxy]
+        
+        logger.info(f"3. Resultados DB encontrados: {len(db_results)}")
+
+        # ==============================================================================
+        # PASO 3: LÓGICA WHATSAPP (Side Effect)
+        # ==============================================================================
+        if db_results and "image_url" in db_results[0] and db_results[0]["image_url"]:
+            username = request.function_call_username
+            if username and isinstance(username, str):
+                raw_phone = username.split("--")[-1] if "--" in username else username
+                try:
+                    await enviar_whatsapp_logic(raw_phone, db_results[0]["image_url"])
+                    # Opcional: Eliminar la URL para que no sature el contexto del agente en el paso 4
+                    # Pero a veces es bueno dejarla para que el agente sepa que hay foto.
+                    # Si quieres borrarla descomenta abajo:
+                    # for row in db_results:
+                    #    if "image_url" in row: del row["image_url"]
+                except Exception as e:
+                    logger.error(f"Error enviando WhatsApp: {e}")
+
+        # ==============================================================================
+        # PASO 4: DATOS -> LENGUAJE NATURAL (Segunda llamada al Agente)
+        # ==============================================================================
+        
+        if not db_results:
+            final_message = "No encontré información en la base de datos que coincida con tu búsqueda."
+        else:
+            # Convertimos los datos a string JSON para pasárselos al agente
+            data_string = json.dumps(db_results, default=str, ensure_ascii=False)
+            
+            analysis_prompt = f"""
+            Actúa como un asistente de ventas experto en movilidad eléctrica.
+            
+            CONTEXTO:
+            El usuario preguntó: "{question}"
+            
+            DATOS ENCONTRADOS EN LA BASE DE DATOS:
+            {data_string}
+            
+            INSTRUCCIÓN:
+            Responde amablemente a la pregunta del usuario basándote ESTRICTAMENTE en los datos encontrados arriba.
+            - Si hay precios, formatéalos con signo de pesos.
+            - Destaca las características principales.
+            - Sé conciso y persuasivo.
+            """
+            
+            logger.info("4. Enviando datos al agente para interpretación...")
+            final_message = await call_agent_api(analysis_prompt)
+
+        # ==============================================================================
+        # PASO 5: RETORNO FINAL
+        # ==============================================================================
+        return responder(
+            status_code=200,
+            title="Asistente Virtual",
+            raw_data={
+                "mensaje": final_message, # El mensaje generado por la IA
+                "data_raw": db_results,   # Los datos crudos (opcional, útil para frontend)
+                "sql_debug": sql_clean    # Debug (opcional)
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Error crítico en query_generator: {e}")
+        return responder(500, "Error en el sistema", {"mensaje": f"Ocurrió un problema procesando tu solicitud: {str(e)}"})
+
+
             
 
 @app.get("/")

@@ -1,0 +1,393 @@
+CREATE TABLE dispositivos_moviles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    
+    -- Clasificación
+    marca VARCHAR(50),             -- Xiaomi, Redmi, HONOR
+    categoria VARCHAR(50),         -- Smartphone, Tablet, Accesorio
+    modelo VARCHAR(100),           -- Ej: Redmi Note 13 Pro
+    
+    -- Especificaciones Técnicas Principales
+    pantalla TEXT,                 -- Tamaño, tipo, Hz, nits
+    procesador VARCHAR(150),       -- CPU / Chipset
+    memoria VARCHAR(150),          -- RAM + ROM (Almacenamiento)
+    bateria VARCHAR(100),          -- mAh
+    carga VARCHAR(100),            -- Watts y velocidad
+    
+    -- Multimedia y Software
+    camaras TEXT,                  -- Principal y Frontal
+    sistema_operativo VARCHAR(100),-- Android, HyperOS, MagicOS
+    
+    -- Otros
+    extras TEXT,                   -- IP rating, Audio, Huella, etc.
+    puntos_venta_clave TEXT,       -- KSP (Key Selling Points)
+    precio_promocion VARCHAR(50),  -- Para los modelos que incluían precio
+    
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE especificaciones_producto (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    
+    -- Información Básica / Basic Info
+    modelo_interno VARCHAR(50),          -- 车型 Model (ej: XMM, T18S)
+    nombre_comercial VARCHAR(100),       -- 营销名 Marketing Name (ej: ATHENA)
+    cantidad_carga_40hq VARCHAR(100),    -- 装箱量 Loading Quantity
+    colores_disponibles VARCHAR(100),    -- 颜色 Color
+    notas VARCHAR(255),                  -- 备注 Notes
+    
+    -- Dimensiones / Overall Size
+    dimensiones_producto VARCHAR(100),   -- 尺寸 Dimensions
+    
+    -- Funciones Inteligentes y Seguridad / Smart Features
+    funciones_app TEXT,                  -- Smart Features
+    sistema_antirrobo TEXT,              -- 智能防盗 Smart Anti-theft
+    sistema_seguridad_ai TEXT,           -- 安全者守护系统 AI Security System
+    metodo_arranque VARCHAR(150),        -- 启动方式 Start Method
+    
+    -- Rendimiento / Performance
+    autonomia_km VARCHAR(150),           -- 续航里程 Mileage
+    velocidad_maxima VARCHAR(100),       -- 最高速度 Max Speed
+    carga_maxima VARCHAR(100),           -- 总安全载重 Max Load Capacity
+    torque_maximo VARCHAR(100),          -- 最大扭矩 Max Torque
+    potencia_pico VARCHAR(100),          -- 峰值功率 Peak Power
+    capacidad_escalada VARCHAR(50),      -- 爬坡能力 Gradeability
+    distancia_al_suelo VARCHAR(50),      -- 最小离地间隙 Min Ground Clearance
+    
+    -- Componentes Físicos / Components
+    tiempo_carga VARCHAR(50),            -- 充电时间 Charging Time
+    suspension_delantera VARCHAR(100),   -- 前减震 Front Suspension
+    suspension_trasera VARCHAR(100),     -- 后减震 Rear Suspension
+    tipo_asiento VARCHAR(100),           -- 座椅 Seat
+    impermeabilidad VARCHAR(50),         -- Waterproof rating
+    puerto_usb VARCHAR(50),              -- USB Charging
+    audio_bluetooth VARCHAR(50),         -- Bluetooth Audio
+    modo_reparacion_un_clic TEXT,        -- 一键修复 One-key repair
+    
+    -- Motor y Transmisión / Motor & Power
+    tipo_motor VARCHAR(100),             -- 电机类型 Motor Type
+    especificacion_iman VARCHAR(100),    -- 电机磁钢 Magnet Steel
+    potencia_nominal VARCHAR(50),        -- 额定功率 Rated Power
+    tipo_transmision VARCHAR(50),        -- 传动方式 Driving Mode
+    
+    -- Frenos y Ruedas / Brake & Tire
+    tipo_frenos VARCHAR(100),            -- 刹车方式 Brake Type
+    modo_freno VARCHAR(50),              -- 刹车模式 Brake Mode
+    tipo_llanta VARCHAR(100),            -- 轮毂类型 Wheel Hub
+    especificacion_neumatico VARCHAR(50),-- 轮胎 Tyre
+    
+    -- Batería / Battery
+    tipo_bateria VARCHAR(100),           -- 电池 Battery Type
+    especificacion_bateria VARCHAR(50),  -- Voltaje/Amperaje
+    cargador VARCHAR(150),               -- 充电器 Charger Spec
+    
+    -- Peso y Empaque / Weight & Packing
+    peso_seco VARCHAR(50),               -- 整备质量 Curb Weight
+    peso_total VARCHAR(50),              -- 整车重量 With Battery
+    tipo_empaque VARCHAR(50),            -- 包装方式 Packing Type
+    dimensiones_empaque VARCHAR(100),    -- 外箱尺寸 Packing Size
+    
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO especificaciones_producto (
+    modelo_interno, nombre_comercial, cantidad_carga_40hq, colores_disponibles, notas,
+    dimensiones_producto, funciones_app, sistema_antirrobo, sistema_seguridad_ai, metodo_arranque,
+    autonomia_km, velocidad_maxima, carga_maxima, torque_maximo, potencia_pico,
+    capacidad_escalada, distancia_al_suelo, tiempo_carga,
+    suspension_delantera, suspension_trasera, tipo_asiento, impermeabilidad, puerto_usb, audio_bluetooth, modo_reparacion_un_clic,
+    tipo_motor, especificacion_iman, potencia_nominal, tipo_transmision,
+    tipo_frenos, modo_freno, tipo_llanta, especificacion_neumatico,
+    tipo_bateria, especificacion_bateria, cargador,
+    peso_seco, peso_total, tipo_empaque, dimensiones_empaque
+) VALUES 
+-- 1. ATHENA (XMM) - Del archivo original
+(
+    'XMM', 'ATHENA', '249 unidades', 'Azul/Negro/Verde', NULL,
+    'L1405*W650*H1000mm',
+    'APP un toque, Timbre buscador, Gestión multi-vehículo, Tienda, Post-venta, Trayectoria, Login biométrico',
+    'Bloqueo motor, Armado auto, Alarma rotación/vibración, GPS',
+    'Predicción colisión AI', 'Llave física, BT, APP',
+    '100±8Km (80kg); 62±8Km (125kg)', '42km/h', '125Kg (Segura)', '46N.m', '600W',
+    '15°', '130mm', '6-8H',
+    'Horquilla reforzada', 'Resorte completo', 'Asiento dividido', 'IP65', 'No', 'No', NULL,
+    'Cubo imán permanente', '20H1.6T', '500W', 'Eje',
+    'Tambor 110 (Del/Tras)', 'Freno mano', 'Hierro', '2.75-10 Vacío',
+    'Plomo-ácido (Tianneng)', '60V20Ah', 'AC:100-264V 50/60HZ 3A',
+    '35.5Kg', '66Kg', 'SKD', 'L1235*W310*H685mm'
+),
+-- 2. CORVUS D (U2-骑手版/Rider Edition) - Del archivo original
+(
+    'U2-Edición Rider', 'CORVUS D', '160 unidades', 'Verde/Rojo', 'Garantía batería 2 años',
+    '1700*680*1010 mm',
+    'APP un toque, Buscador, Gestión multi-vehículo, Tienda, Post-venta, Trayectoria, Apertura cajuela remota',
+    'Bloqueo motor, Armado auto, Alarma rotación/vibración, GPS',
+    'Predicción colisión AI', 'Llave física, BT, NFC, APP',
+    '91±8Km (80kg); 60±8Km (125kg)', '63Km/h', '135Kg', '86N.m', '1200W',
+    '20°', '120mm', '6-8H',
+    'Hidráulica 27#', 'Hidráulica tubo 30', 'Una pieza', 'IP65', '5V/1A', 'Sí', 'Sí',
+    'Cubo imán permanente', '30H1.8T', '1000W', 'Eje',
+    'Disco 180 (Del/Tras)', 'Freno mano', 'Aluminio MT2.15-12', '3.00-10 Vacío',
+    'Litio-Ferrofosfato', '60V20AH', '100-264V 50/60HZ 3A',
+    '55.34kg', '65.5kg', 'SKD', 'L1480*W370*H760mm'
+),
+-- 3. CORVUS P+ (U2-用户版) - Nuevo texto 1
+(
+    'U2-Usuario', 'CORVUS P+', '160 unidades', 'Amarillo/Verde/Blanco', 'Garantía batería 5 años',
+    '1700*680*1010 mm',
+    'APP un toque, Buscador, Gestión multi-vehículo, Tienda, Post-venta, Trayectoria, Login biométrico, Apertura cajuela',
+    'Bloqueo motor, Armado auto, Alarma rotación/vibración, GPS',
+    'Predicción colisión AI', 'Llave física, BT, NFC, APP',
+    '130±8Km (80kg); 80±8Km (125kg) (Teórico)', '63Km/h', '135Kg', '86N.m', '1200W',
+    '20°', '120mm', '6-8H',
+    'Hidráulica 27#', 'Hidráulica tubo 30', 'Una pieza', 'IP65', '5V/1A', 'Sí', 'Sí',
+    'Cubo imán permanente', '30H1.8T', '1000W', 'Eje',
+    'Disco 180 (Del/Tras)', 'Freno mano', 'Aluminio MT2.15-12', '3.00-10 Vacío',
+    'Litio-Ferrofosfato (New Energy)', '64V33AH', '100-264V 50/60HZ 4A',
+    '55.34kg', 'TBD', 'SKD', 'L1480*W370*H760mm'
+),
+-- 4. ATHENA X2 (BJ1-3) - Nuevo texto 2
+(
+    'BJ1-3', 'ATHENA X2', '198 unidades', 'Rojo/Gris Nebula/Verde/Beige', 'Pedido mín 2 contenedores',
+    '1850*605*1050mm',
+    'APP un toque, Buscador, Gestión multi-vehículo, Tienda, Post-venta, Trayectoria, Login biométrico, Apertura cajuela',
+    'Bloqueo motor, Armado auto, Alarma rotación/vibración, GPS',
+    'Predicción colisión AI', 'Llave física, BT, NFC, APP',
+    '90±8Km (80kg); 50±8Km (125kg)', '42Km/h', '135Kg', '66N.m', '700W',
+    '15°', '120mm', '6-8H',
+    'Hidráulica disco', 'Resorte completo', 'Una pieza', 'IP65', 'No', 'Sí', 'Sí',
+    'Cubo imán permanente', '24H1.7T', '600W', 'Eje',
+    'Del: Disco 180 / Tras: Tambor 110', 'Freno mano', 'Hierro', '2.75-10 Vacío',
+    'Plomo-ácido (Tianneng)', '60V20Ah', 'AC:100-264V 50/60HZ 3A',
+    '52Kg', '82.5KG', 'SKD', 'L1380*W330*H780mm'
+),
+-- 5. URSA F (BQ1) - Nuevo texto 3
+(
+    'BQ1', 'URSA F', '140 unidades', 'Rosa/Gris/Blanco', '/',
+    '1655*620*1090mm',
+    'APP un toque, Buscador, Gestión multi-vehículo, Tienda, Post-venta, Trayectoria, Login biométrico',
+    'Bloqueo motor, Armado auto, Alarma rotación/vibración, GPS',
+    'Predicción colisión AI', 'Llave física, BT, NFC, APP',
+    '100±8Km (80kg); 70±8Km (125kg)', '63Km/h', '135Kg', '86N.m', '1200W',
+    '20°', '120mm', '6-8H',
+    'Hidráulica 27#', 'Resorte hidráulico 24#', 'Una pieza', 'IP65', '5V/1A', 'Sí', 'Sí',
+    'Cubo imán permanente', '30H1.8T', '1000W', 'Eje',
+    'Del: Disco 180 / Tras: Tambor 110', 'Freno mano', 'Del: Aluminio / Tras: Hierro', '3.00-10 Vacío',
+    'Plomo-ácido (Tianneng)', '72V20Ah', '100-264V 50/60HZ 3A',
+    '49.5kg', '87kg', 'SKD', 'L1620*W430*H780mm'
+),
+-- 6. URSA F+ (ZM) - Nuevo texto 4
+(
+    'ZM', 'URSA F+', '230 unidades', 'Naranja/Azul/Rojo', '/',
+    '1670*705*1045mm',
+    'APP un toque, Buscador, Gestión multi-vehículo, Tienda, Post-venta, Trayectoria, Login biométrico, Apertura cajuela',
+    'Bloqueo motor, Armado auto, Alarma rotación/vibración, GPS',
+    'Predicción colisión AI', 'Llave física, BT, NFC, APP',
+    '99±8Km (80kg); 72±8Km (125kg)', '63Km/h', '135Kg', '86N.m', '1200W',
+    '20°', '120mm', '6-8H',
+    'Hidráulica 27#', 'Resorte hidráulico 24#', 'Una pieza', 'IP65', '5V/1A', 'Sí', 'Sí',
+    'Cubo imán permanente', '30H1.8T', '1000W', 'Eje',
+    'Disco 180 (Del/Tras)', 'Freno mano', 'Del: Aluminio / Tras: Hierro', '3.00-10 Vacío',
+    'Plomo-ácido (Tianneng)', '72V20Ah', '100-264V 50/60HZ 3A',
+    '53kg', '90.5kg', 'SKD', 'L1460*W380*H815mm'
+),
+-- 7. CORVUS P (T18S) - Nuevo texto 5
+(
+    'T18S', 'CORVUS P', '100 unidades', 'Blanco Metal/Púrpura/Gris', '/',
+    '1700*680*1100mm',
+    'APP un toque, Buscador, Gestión multi-vehículo, Tienda, Post-venta, Trayectoria, Login biométrico, Apertura cajuela',
+    'Bloqueo motor, Armado auto, Alarma rotación/vibración, GPS',
+    'Predicción colisión AI', 'Llave física, BT, NFC, APP',
+    '140±8Km (80kg); 93±8Km (125kg)', '64Km/h', '135Kg', '100N.M', '1800W',
+    '20°', '130mm', '6-8H',
+    'Hidráulica φ30', 'Hidráulica φ30', 'Una pieza', 'IP65', '5V/1A', 'Sí', 'Sí',
+    'Motor de Cubo (Hub Motor)', '35H Gran Potencia', '1200W', 'Transmisión Motor Directa',
+    'Disco/Disco', 'Freno mano', 'Hierro', '3.0-10 Vacío',
+    'Plomo-ácido (Tianneng)', '72V32Ah', '100-264V 50/60HZ 4A',
+    '65.88KG', '120KG', 'SKD', 'L1800*W510*H870mm'
+);
+
+INSERT INTO dispositivos_moviles (marca, categoria, modelo, pantalla, procesador, memoria, bateria, carga, camaras, sistema_operativo, extras, puntos_venta_clave, precio_promocion) VALUES
+-- SMARTPHONES XIAOMI/REDMI
+('Redmi', 'Smartphone', 'Redmi 14C', 
+ '6.88" HD+ LCD 120Hz (260ppi, 600nits), TÜV Rheinland', 
+ 'MediaTek Helio G81-Ultra (Octa-core 2.0GHz)', 
+ '4GB + 4GB Virtual / 128GB (Exp. 1TB)', 
+ '5160 mAh', '18W (100% en 114 min)', 
+ 'Principal 50MP + QVGA, Frontal 13MP (f/2.0)', 
+ 'HyperOs / Android 14', 
+ 'Huella lateral, Jack 3.5mm, Volumen 150%', 
+ 'Pantalla inmersiva más grande del segmento (6.88"). Diseño Premium (Cristal/Cuero vegano). Cámara 50MP con IA y filtros cinematográficos.', NULL),
+
+('Redmi', 'Smartphone', 'REDMI A5', 
+ '6.88" AdaptiveSync 120Hz LCD HD+, 450 nits, TÜV Rheinland', 
+ 'UNISOC T7250 Octa-core 1.8GHz', 
+ '3GB / 64GB (Exp. 2TB)', 
+ '5200mAh', '15W', 
+ 'Trasera Dual 32MP (f/2.0) + QVGA, Frontal 8MP', 
+ 'Android 15', 
+ 'Desbloqueo facial/dactilar, Jack 3.5mm, Wet Touch', 
+ 'Pantalla Inmersiva 6.88". Cámara Dual 32MP con AI.', NULL),
+
+('Redmi', 'Smartphone', 'Redmi 13 4G', 
+ '6.79" FHD 90 Hz', 
+ 'Mediatek Helio G91 Ultra', 
+ '6GB/8GB + 128GB/256GB', 
+ '5030 mAh', '33 W', 
+ 'Dual 108+2 MP, Frontal 13 MP', 
+ 'Android 14 / Hyper OS', 
+ NULL, 
+ 'Dual Cámara de 108MP. Batería 5030 mAh, Carga 33W.', NULL),
+
+('Redmi', 'Smartphone', 'Redmi Note 13 4G', 
+ '6.67" FHD Amoled 120 Hz', 
+ 'Snapdragon 685', 
+ '6GB/8GB + 128GB/256GB/512GB (Exp. 1 Tb)', 
+ '5000 mAh', '33 W', 
+ 'Triple 108+8+2 MP, Frontal 16 MP', 
+ 'Android 13', 
+ NULL, 
+ 'Cámara 108MP. Memoria hasta 1TB. Pantalla Amoled 120Hz.', NULL),
+
+('Redmi', 'Smartphone', 'Redmi Note 13 Pro (4G)', 
+ '6.67" FHD Amoled 120 Hz, IP 54', 
+ 'MediaTek Helio G99-Ultra', 
+ '8 GB + 256 GB', 
+ '5000 mAh', '67 W', 
+ 'Triple 200+8+2 MP, Frontal 16 MP', 
+ 'Android 13', 
+ 'IP 54', 
+ 'Cámara 200MP. Carga 67W. IP54.', NULL),
+
+('Redmi', 'Smartphone', 'Redmi Note 13 Pro 5G', 
+ '6.67" AMOLED 1.5K 120 Hz, IP 54', 
+ 'Snapdragon 7s Gen 2', 
+ '8GB/12GB + 256GB/512GB', 
+ '5100 mAh', '67 W', 
+ 'Triple 200+8+2 MP OIS, Frontal 16 MP', 
+ 'Android 13', 
+ 'IP 54', 
+ 'Cámara 200MP OIS. Pantalla 1.5K AMOLED. Carga 67W.', NULL),
+
+('Redmi', 'Smartphone', 'Redmi Note 13 Pro+ 5G', 
+ '6.67" AMOLED 1.5K 120Hz, IP 54', 
+ 'Mediatek Dimensity 7200 Ultra', 
+ '12 GB + 512 GB', 
+ '5000 mAh', '120W', 
+ 'Triple 200+8+2 MP OIS, Frontal 16 MP', 
+ 'Android 14', 
+ 'IP 54', 
+ 'Carga Rápida 120W. Cámara 200MP OIS.', NULL),
+
+('Redmi', 'Smartphone', 'Redmi A3x', 
+ 'LCD HD+ 6.71" 90Hz', 
+ 'Unisoc T603 1.8GHz', 
+ '4 + 128 GB', 
+ '5000mAh', '10W', 
+ '8 MP + QVGA, Frontal 5 MP', 
+ 'Android 14', 
+ NULL, 
+ 'Económico.', '$1,999'),
+
+('Redmi', 'Smartphone', 'Redmi 13C', 
+ 'LCD HD+ 6.74" 90Hz', 
+ 'MediaTek Helio G85', 
+ '4 + 128 GB', 
+ '5000mAh', '18W', 
+ '50 + 2 MP + QVGA, Frontal 8 MP', 
+ 'Android 13', 
+ NULL, 
+ 'Calidad precio.', '$2,499'),
+
+-- TABLETS XIAOMI/REDMI
+('Redmi', 'Tablet', 'Redmi Pad SE', 
+ 'FHD 11" 90Hz', 
+ 'Snapdragon 680 4G', 
+ '8 + 256 GB (Exp. 1 Tb)', 
+ '8000mAh', '10W', 
+ 'Trasera 8 MP, Frontal 5 MP', 
+ NULL, 
+ '4 altavoces Dolby Atmos, Diseño Metal Unibody', 
+ 'Audio y Diseño Premium.', NULL),
+
+('Redmi', 'Tablet', 'Redmi Pad Pro', 
+ 'LCD 2.5K 12.1" 120Hz', 
+ 'Snapdragon 7s Gen 2', 
+ '8 + 256 GB', 
+ '10000mAh', '33W', 
+ 'Trasera 8 MP, Frontal 8 MP', 
+ 'Android 14', 
+ NULL, 
+ 'Batería 10000mAh. Pantalla 2.5K 120Hz.', NULL),
+
+('Xiaomi', 'Tablet', 'Xiaomi Pad 6', 
+ 'WQHD+ 2.8K 11" 144Hz', 
+ 'Snapdragon 870 5G', 
+ '6 + 128 GB', 
+ '8840mAh', '33W', 
+ 'Trasera 13 MP, Frontal 8 MP', 
+ 'Android 13', 
+ 'IP54, 4 Speakers', 
+ 'Pantalla Ultra Fluida 144Hz. Procesador potente SD 870.', NULL);
+ INSERT INTO dispositivos_moviles (marca, categoria, modelo, pantalla, procesador, memoria, bateria, carga, camaras, sistema_operativo, extras, puntos_venta_clave) VALUES
+-- SMARTPHONES HONOR
+('HONOR', 'Smartphone', 'HONOR X8c', 
+ 'AMOLED 6.7" FHD+ 120Hz (2800nits), SGS', 
+ 'Snapdragon 685', 
+ '8GB + 512GB (16GB RAM Turbo)', 
+ '5000mAh', '35W SuperCharge', 
+ '108MP OIS+EIS + 5MP Gran Angular, Frontal 50MP Flash', 
+ 'MagicOS 9.0 (Android 15)', 
+ 'IP64, Magic Capsule, Magic Portal', 
+ 'Primer Smartphone con Borrador IA. Delgado y resistente (caídas 1.8m).'),
+
+('HONOR', 'Smartphone', 'HONOR X7c', 
+ 'LCD 6.77" HD+ 120Hz, SGS 5 Estrellas', 
+ 'Snapdragon 685', 
+ '8GB + 256GB (16GB RAM Turbo)', 
+ '5200mAh', '35W SuperCharge', 
+ '108MP + 2MP Profundidad, Frontal 8MP', 
+ 'MagicOS 8.0 (Android 14)', 
+ 'IP64, Altavoces estéreo (300% vol)', 
+ 'Resistencia 360° certificada. Batería 2 días. Gran almacenamiento.'),
+
+('HONOR', 'Smartphone', 'HONOR X6b', 
+ 'LCD 6.56" HD+ 90Hz', 
+ 'MediaTek Helio G85', 
+ '6GB+6GB (RAM Turbo) / 256GB (Exp. 1TB)', 
+ '5200mAh', '35W SuperCharge', 
+ '50MP + 2MP Profundidad, Frontal 5MP', 
+ 'MagicOS 8.0', 
+ 'Magic Capsule', 
+ 'Batería duradera (hasta 4 años durabilidad). Gran almacenamiento.'),
+
+('HONOR', 'Smartphone', 'HONOR Magic7 Lite', 
+ 'AMOLED 6.78" 1.5K 120Hz (4000 nits)', 
+ 'Snapdragon 6 Gen 1', 
+ '8GB+8GB Turbo / 512GB', 
+ '6600mAh (Silicon-Carbon)', '66W SuperCharge', 
+ '108MP (OIS) + 5MP, Frontal 16MP', 
+ 'MagicOS 8.0', 
+ 'IP65M, SGS 5 Estrellas', 
+ 'Súper Resistencia 3ra Gen. Batería Silicon-Carbon 6600mAh (3 días). Cámara 108MP OIS.'),
+
+('HONOR', 'Smartphone', 'HONOR 200 Pro 5G', 
+ 'AMOLED 6.78" FHD+ 120Hz (4000 nits)', 
+ 'Snapdragon 8s Gen 3', 
+ '12GB+12GB Turbo / 512GB', 
+ '5200mAh (Silicon-Carbon)', '100W SuperCharge (66W Inalámbrica)', 
+ '50MP OIS + 50MP Tele (2.5x), Frontal 50MP 3D', 
+ 'MagicOS 8.0', 
+ 'IP65, Sonido estéreo, Magic Portal, Traducción', 
+ 'Cámara Profesional (Sensor SONY, Retrato Harcourt). Carga 100W. IA Avanzada (Goma IA).'),
+
+-- ACCESORIOS HONOR
+('HONOR', 'Accesorio', 'HONOR CHOICE Portable Bluetooth Speaker', 
+ NULL, -- Sin pantalla
+ NULL, -- Sin procesador
+ NULL, -- Sin memoria
+ '1000 mAh (10 Horas)', 
+ NULL, 
+ NULL, -- Sin camara
+ NULL, 
+ 'IP67, Bluetooth, Modo estéreo (dual pairing)', 
+ '10 Horas de música. Resistencia IP67. Bajo fuerte 5W.');
