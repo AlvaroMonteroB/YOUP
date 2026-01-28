@@ -575,6 +575,7 @@ async def enviar_whatsapp_logic(phone: str, image_url: str):
 
 async def call_agent_api(prompt: str) -> str:
     """Función auxiliar para llamar al agente y obtener texto limpio"""
+    logger.info("Llamando api agent studio")
     async with httpx.AsyncClient() as client:
         response = await client.post(
             AGENT_API_URL,
@@ -709,8 +710,48 @@ async def query_generator(request: QueryRequest, db: Session = Depends(get_db)):
         logger.error(f"Error crítico en query_generator: {e}")
         return responder(500, "Error en el sistema", {"mensaje": f"Ocurrió un problema procesando tu solicitud: {str(e)}"})
 
+@app.post("/test-sql-raw")
+async def test_sql_raw(request: SqlRequest, db: Session = Depends(get_db)):
+    """
+    Endpoint para probar queries SQL manualmente.
+    Uso: {"sql": "SELECT * FROM especificaciones_producto LIMIT 5"}
+    """
+    sql_query = request.sql
 
+    # Validación simple
+    if not sql_query or not sql_query.strip():
+        return responder(400, "Error", {"mensaje": "La consulta SQL no puede estar vacía."})
+
+    try:
+        logger.info(f"Ejecutando SQL manual: {sql_query}")
+        
+        # 1. Ejecutar la query usando text() para seguridad básica
+        result = db.execute(text(sql_query))
+        
+        # 2. Verificar si la query retorna filas (es un SELECT)
+        if result.returns_rows:
+            keys = result.keys()
+            # Convertimos las filas de SQLAlchemy a diccionarios de Python
+            data = [dict(zip(keys, row)) for row in result]
             
+            return responder(200, "Query Exitosa", {
+                "filas_encontradas": len(data),
+                "resultados": data
+            })
+        else:
+            # Para INSERT, UPDATE, DELETE (si lo permites)
+            db.commit()
+            return responder(200, "Ejecución Exitosa", {
+                "mensaje": f"Operación realizada. Filas afectadas: {result.rowcount}"
+            })
+
+    except Exception as e:
+        logger.error(f"Error ejecutando SQL manual: {e}")
+        # Retornamos el error exacto de la base de datos para que sepas qué corregir
+        return responder(500, "Error SQL", {"detalle_error": str(e)})
+            
+
+
 
 @app.get("/")
 async def health_check():
