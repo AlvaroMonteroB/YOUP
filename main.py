@@ -72,6 +72,8 @@ Base = declarative_base()
 
 class TestPrompt(BaseModel):
     prompt: str
+    key: Optional[str] = None
+    token: Optional[str] = None
 
 class VehicleSpec(Base):
     __tablename__ = "especificaciones_producto"
@@ -608,8 +610,8 @@ async def openapi_test(data: TestPrompt):
     Uso: {"prompt": "Hola"}
     """
     AGENT_API_URL = "https://agents.dyna.ai/openapi/v1/conversation/dialog/" # Reemplazar con URL real
-    QUERY_KEY = os.getenv("QUERY_KEY")     # Claves específicas solicitadas
-    QUERY_TOKEN = os.getenv("QUERY_TOKEN")
+    QUERY_KEY =data.key if data.key else os.getenv("QUERY_KEY")     # Claves específicas solicitadas
+    QUERY_TOKEN = data.token if data.token else os.getenv("QUERY_TOKEN")
     AS_ACCOUNT = os.getenv("AS_ACCOUNT", "").replace('"', '').replace("'", "").strip()
     prompt = data.prompt
     
