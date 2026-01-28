@@ -593,7 +593,7 @@ async def call_agent_api(prompt: str) -> str:
 # --- 4. ENDPOINT PRINCIPAL ---
 
 
-AGENT_API_URL = "https://tu-api-cybertron.com/v1/agent" # Reemplazar con URL real
+AGENT_API_URL = "https://agents.dyna.ai/openapi/v1/conversation/dialog/" # Reemplazar con URL real
 QUERY_KEY = os.getenv("QUERY_KEY")     # Claves específicas solicitadas
 QUERY_TOKEN = os.getenv("QUERY_TOKEN")
 AS_ACCOUNT = os.getenv("AS_ACCOUNT", "").replace('"', '').replace("'", "").strip()
