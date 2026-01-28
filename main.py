@@ -3,17 +3,23 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 from datetime import datetime
 from typing import Optional, Any, Dict
+import json
+
 import httpx
-from fastapi import FastAPI, HTTPException, status
+import requests
+from dotenv import load_dotenv
+
+# --- FASTAPI IMPORTS CORREGIDOS ---
+from fastapi import FastAPI, HTTPException, status, Depends  # <--- Faltaba Depends
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
+
+# --- MOTOR / MONGO IMPORTS ---
 from motor.motor_asyncio import AsyncIOMotorClient
-from dotenv import load_dotenv
-import requests
-import json
-from sqlalchemy import create_all, create_engine
-from sqlalchemy.orm import sessionmaker
-from motor.motor_asyncio import AsyncIOMotorClient
+
+# --- SQLALCHEMY IMPORTS CORREGIDOS ---
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, func, text # <--- Faltaban estos
+from sqlalchemy.orm import sessionmaker, Session, declarative_base # <--- Faltaba Session y declarative_base
 """
 sudo docker-compose up -d --build
 
@@ -53,6 +59,10 @@ users_collection = db.users
 
 # --- CONFIG SQL (Nueva) ---
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
+if not SQLALCHEMY_DATABASE_URL:
+    # Agrega un fallback o lanza error si no hay URL, sino crasheará create_engine
+    print("ADVERTENCIA: DATABASE_URL no seteada") 
+
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -555,16 +565,7 @@ async def generate_summary_batch():
     return responder(200, "Resumen Masivo Completado", raw_data)
 
 
-def responder(status_code: int, title: str, raw_data: Dict[str, Any]):
-    mensaje = raw_data.get("mensaje") or raw_data.get("msgRetorno") or "Operación completada."
-    status_str = "error" if status_code >= 400 else "exito"
-    
-    return JSONResponse(status_code=status_code, content={
-        "raw": {"status": status_str, **raw_data},
-        "markdown": f"**{title}**\n\n{mensaje}",
-        "type": "markdown",
-        "desc": f"{mensaje}\n\n"
-    })
+
 
 async def enviar_whatsapp_logic(phone: str, image_url: str):
     """Simulación de envío de WhatsApp"""
@@ -594,7 +595,7 @@ async def call_agent_api(prompt: str) -> str:
 
 AGENT_API_URL = "https://tu-api-cybertron.com/v1/agent" # Reemplazar con URL real
 QUERY_KEY = os.getenv("QUERY_KEY")     # Claves específicas solicitadas
-QUERY_TOKEN = os.getenv("QUERY_KEY")
+QUERY_TOKEN = os.getenv("QUERY_TOKEN")
 AS_ACCOUNT = os.getenv("AS_ACCOUNT", "").replace('"', '').replace("'", "").strip()
 
 

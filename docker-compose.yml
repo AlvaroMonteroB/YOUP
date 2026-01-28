@@ -14,7 +14,7 @@ services:
         condition: service_healthy
     environment:
       - MONGO_URI=mongodb://admin:root-1756-sffrgd-ddj86t@mongo_db:27017/marketing_db?authSource=admin
-      - SQL_URL=postgresql://user_admin:pass_123@sql_db:5432/productos_db
+      - DATABASE_URL=postgresql://user_admin:pass_123@sql_db:5432/productos_db
     volumes:
       - ./logs:/app/logs # Mapeo de logs para no perderlos si el contenedor muere
 
