@@ -8,11 +8,15 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - mongo_db
-      - sql_db # Depende de ambas
+      mongo_db:
+        condition: service_healthy
+      sql_db:
+        condition: service_healthy
     environment:
       - MONGO_URI=mongodb://admin:root-1756-sffrgd-ddj86t@mongo_db:27017/marketing_db?authSource=admin
       - SQL_URL=postgresql://user_admin:pass_123@sql_db:5432/productos_db
+    volumes:
+      - ./logs:/app/logs # Mapeo de logs para no perderlos si el contenedor muere
 
   mongo_db:
     image: mongo:latest
@@ -21,12 +25,16 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: root-1756-sffrgd-ddj86t
+    healthcheck: # Asegura que Mongo esté realmente listo
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     volumes:
       - mongo_data:/data/db
 
-  # Nueva Base de Datos SQL
   sql_db:
-    image: postgres:latest
+    image: postgres:15-alpine # Especificar versión ayuda a la estabilidad
     container_name: productos-sql
     restart: always
     environment:
@@ -34,11 +42,16 @@ services:
       POSTGRES_PASSWORD: pass_123
       POSTGRES_DB: productos_db
     ports:
-      - "5433:5432" # Mapeo externo 5433 para no chocar si tienes otro local
+      - "5433:5432"
+    healthcheck: # Asegura que Postgres esté listo para recibir queries
+      test: ["CMD-SHELL", "pg_isready -U user_admin -d productos_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     volumes:
       - sql_data:/var/lib/postgresql/data 
-      - ./YOUP/SQL_scripts:/docker-entrypoint-initdb.d/
+      - ./SQL_scripts:/docker-entrypoint-initdb.d/
 
 volumes:
   mongo_data:
-  sql_data: # Nuevo volumen para SQL
+  sql_data:

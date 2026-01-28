@@ -15,7 +15,7 @@ from sqlalchemy import create_all, create_engine
 from sqlalchemy.orm import sessionmaker
 from motor.motor_asyncio import AsyncIOMotorClient
 """
-sudo docker-compose up -d ---build
+sudo docker-compose up -d --build
 
 """
 
@@ -60,37 +60,107 @@ Base = declarative_base()
 
 # 3. Modelos de Datos
 class VehicleSpec(Base):
-    __tablename__ = "especificaciones_vehiculos"
+    __tablename__ = "especificaciones_producto"
+
     id = Column(Integer, primary_key=True, index=True)
-    modelo_interno = Column(String(50), unique=True)
-    nombre_comercial = Column(String(100))
+    
+    # Información Básica
+    modelo_interno = Column(String(50), unique=True, index=True) # XMM, T18S
+    nombre_comercial = Column(String(100))                       # ATHENA
+    cantidad_carga_40hq = Column(String(100))
+    colores_disponibles = Column(String(100))
+    notas = Column(String(255))
+    
+    # Dimensiones
+    dimensiones_producto = Column(String(100))
+    
+    # Funciones Inteligentes y Seguridad
+    funciones_app = Column(Text)
+    sistema_antirrobo = Column(Text)
+    sistema_seguridad_ai = Column(Text)
+    metodo_arranque = Column(String(150))
+    
+    # Rendimiento
     autonomia_km = Column(String(150))
     velocidad_maxima = Column(String(100))
+    carga_maxima = Column(String(100))
+    torque_maximo = Column(String(100))
+    potencia_pico = Column(String(100))
+    capacidad_escalada = Column(String(50))
+    distancia_al_suelo = Column(String(50))
+    
+    # Componentes Físicos
+    tiempo_carga = Column(String(50))
+    suspension_delantera = Column(String(100))
+    suspension_trasera = Column(String(100))
+    tipo_asiento = Column(String(100))
+    impermeabilidad = Column(String(50))
+    puerto_usb = Column(String(50))
+    audio_bluetooth = Column(String(50))
+    modo_reparacion_un_clic = Column(Text)
+    
+    # Motor y Transmisión
     tipo_motor = Column(String(100))
+    especificacion_iman = Column(String(100))
+    potencia_nominal = Column(String(50))
+    tipo_transmision = Column(String(50))
+    
+    # Frenos y Ruedas
+    tipo_frenos = Column(String(100))
+    modo_freno = Column(String(50))
+    tipo_llanta = Column(String(100))
+    especificacion_neumatico = Column(String(50))
+    
+    # Batería
     tipo_bateria = Column(String(100))
-    fecha_creacion = Column(DateTime, default=datetime.datetime.utcnow)
+    especificacion_bateria = Column(String(50))
+    cargador = Column(String(150))
+    
+    # Peso y Empaque
+    peso_seco = Column(String(50))
+    peso_total = Column(String(50))
+    tipo_empaque = Column(String(50))
+    dimensiones_empaque = Column(String(100))
+    
+    # Imagen y Fecha
+    imagen = Column(String(255))            # <--- Nueva Columna
+    fecha_creacion = Column(DateTime, server_default=func.now())
 
 # TABLA 2: Dispositivos Móviles
+
 class MobileDevice(Base):
     __tablename__ = "dispositivos_moviles"
+
     id = Column(Integer, primary_key=True, index=True)
-    marca = Column(String(50))      # Xiaomi, HONOR
-    categoria = Column(String(50))  # Smartphone, Tablet
-    modelo = Column(String(100))    # Redmi Note 13
-    pantalla = Column(Text)
+    
+    # Clasificación
+    marca = Column(String(50))              # Xiaomi, Redmi, HONOR
+    categoria = Column(String(50))          # Smartphone, Tablet
+    modelo = Column(String(100), index=True)# Redmi Note 13 Pro
+    
+    # Especificaciones Técnicas
+    pantalla = Column(Text)                 # Tamaño, tipo, Hz
     procesador = Column(String(150))
-    memoria = Column(String(150))
+    memoria = Column(String(150))           # RAM + ROM
     bateria = Column(String(100))
     carga = Column(String(100))
+    
+    # Multimedia y Software
     camaras = Column(Text)
     sistema_operativo = Column(String(100))
+    
+    # Otros
     extras = Column(Text)
+    puntos_venta_clave = Column(Text)       # KSP
     precio_promocion = Column(String(50))
-    fecha_creacion = Column(DateTime, default=datetime.datetime.utcnow)
+    
+    # Imagen y Fecha
+    imagen = Column(String(255))            # <--- Nueva Columna
+    fecha_creacion = Column(DateTime, server_default=func.now())
 
 
 class QueryRequest(BaseModel):
-    question: str
+    nlp_query: str
     function_call_username: Optional[str] = None
 
 class SqlRequest(BaseModel):
@@ -112,6 +182,14 @@ class AgentResponse(BaseModel):
 
 
 # 4. Helper de Respuesta (Tu nuevo método)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 def responder(status_code: int, title: str, raw_data: Dict[str, Any]):
     """
     Estandariza la respuesta según tus requerimientos:
@@ -513,9 +591,17 @@ async def call_agent_api(prompt: str) -> str:
 
 # --- 4. ENDPOINT PRINCIPAL ---
 
+
+AGENT_API_URL = "https://tu-api-cybertron.com/v1/agent" # Reemplazar con URL real
+QUERY_KEY = os.getenv("QUERY_KEY")     # Claves específicas solicitadas
+QUERY_TOKEN = os.getenv("QUERY_KEY")
+AS_ACCOUNT = os.getenv("AS_ACCOUNT", "").replace('"', '').replace("'", "").strip()
+
+
+
 @app.post("/query-generator")
 async def query_generator(request: QueryRequest, db: Session = Depends(get_db)):
-    question = request.question
+    question = request.nlp_query
     
     # --- VALIDACIÓN INICIAL ---
     if not question or not isinstance(question, str) or not question.strip():

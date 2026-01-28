@@ -1,93 +1,107 @@
+-- 1. Limpieza inicial (por si vas a recargar la base)
+DROP TABLE IF EXISTS dispositivos_moviles;
+DROP TABLE IF EXISTS especificaciones_producto;
+
+-- 2. Creación de Tablas con columna IMAGEN
+
 CREATE TABLE dispositivos_moviles (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id SERIAL PRIMARY KEY, -- En Postgres se usa SERIAL en vez de INT AUTO_INCREMENT
     
     -- Clasificación
-    marca VARCHAR(50),             -- Xiaomi, Redmi, HONOR
-    categoria VARCHAR(50),         -- Smartphone, Tablet, Accesorio
-    modelo VARCHAR(100),           -- Ej: Redmi Note 13 Pro
+    marca VARCHAR(50),
+    categoria VARCHAR(50),
+    modelo VARCHAR(100),
     
-    -- Especificaciones Técnicas Principales
-    pantalla TEXT,                 -- Tamaño, tipo, Hz, nits
-    procesador VARCHAR(150),       -- CPU / Chipset
-    memoria VARCHAR(150),          -- RAM + ROM (Almacenamiento)
-    bateria VARCHAR(100),          -- mAh
-    carga VARCHAR(100),            -- Watts y velocidad
+    -- Especificaciones Técnicas
+    pantalla TEXT,
+    procesador VARCHAR(150),
+    memoria VARCHAR(150),
+    bateria VARCHAR(100),
+    carga VARCHAR(100),
     
-    -- Multimedia y Software
-    camaras TEXT,                  -- Principal y Frontal
-    sistema_operativo VARCHAR(100),-- Android, HyperOS, MagicOS
+    -- Multimedia
+    camaras TEXT,
+    sistema_operativo VARCHAR(100),
     
     -- Otros
-    extras TEXT,                   -- IP rating, Audio, Huella, etc.
-    puntos_venta_clave TEXT,       -- KSP (Key Selling Points)
-    precio_promocion VARCHAR(50),  -- Para los modelos que incluían precio
+    extras TEXT,
+    puntos_venta_clave TEXT,
+    precio_promocion VARCHAR(50),
+    
+    -- NUEVA COLUMNA
+    imagen VARCHAR(255), 
     
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE especificaciones_producto (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     
-    -- Información Básica / Basic Info
-    modelo_interno VARCHAR(50),          -- 车型 Model (ej: XMM, T18S)
-    nombre_comercial VARCHAR(100),       -- 营销名 Marketing Name (ej: ATHENA)
-    cantidad_carga_40hq VARCHAR(100),    -- 装箱量 Loading Quantity
-    colores_disponibles VARCHAR(100),    -- 颜色 Color
-    notas VARCHAR(255),                  -- 备注 Notes
+    -- Información Básica
+    modelo_interno VARCHAR(50),
+    nombre_comercial VARCHAR(100),
+    cantidad_carga_40hq VARCHAR(100),
+    colores_disponibles VARCHAR(100),
+    notas VARCHAR(255),
     
-    -- Dimensiones / Overall Size
-    dimensiones_producto VARCHAR(100),   -- 尺寸 Dimensions
+    -- Dimensiones
+    dimensiones_producto VARCHAR(100),
     
-    -- Funciones Inteligentes y Seguridad / Smart Features
-    funciones_app TEXT,                  -- Smart Features
-    sistema_antirrobo TEXT,              -- 智能防盗 Smart Anti-theft
-    sistema_seguridad_ai TEXT,           -- 安全者守护系统 AI Security System
-    metodo_arranque VARCHAR(150),        -- 启动方式 Start Method
+    -- Funciones Inteligentes
+    funciones_app TEXT,
+    sistema_antirrobo TEXT,
+    sistema_seguridad_ai TEXT,
+    metodo_arranque VARCHAR(150),
     
-    -- Rendimiento / Performance
-    autonomia_km VARCHAR(150),           -- 续航里程 Mileage
-    velocidad_maxima VARCHAR(100),       -- 最高速度 Max Speed
-    carga_maxima VARCHAR(100),           -- 总安全载重 Max Load Capacity
-    torque_maximo VARCHAR(100),          -- 最大扭矩 Max Torque
-    potencia_pico VARCHAR(100),          -- 峰值功率 Peak Power
-    capacidad_escalada VARCHAR(50),      -- 爬坡能力 Gradeability
-    distancia_al_suelo VARCHAR(50),      -- 最小离地间隙 Min Ground Clearance
+    -- Rendimiento
+    autonomia_km VARCHAR(150),
+    velocidad_maxima VARCHAR(100),
+    carga_maxima VARCHAR(100),
+    torque_maximo VARCHAR(100),
+    potencia_pico VARCHAR(100),
+    capacidad_escalada VARCHAR(50),
+    distancia_al_suelo VARCHAR(50),
     
-    -- Componentes Físicos / Components
-    tiempo_carga VARCHAR(50),            -- 充电时间 Charging Time
-    suspension_delantera VARCHAR(100),   -- 前减震 Front Suspension
-    suspension_trasera VARCHAR(100),     -- 后减震 Rear Suspension
-    tipo_asiento VARCHAR(100),           -- 座椅 Seat
-    impermeabilidad VARCHAR(50),         -- Waterproof rating
-    puerto_usb VARCHAR(50),              -- USB Charging
-    audio_bluetooth VARCHAR(50),         -- Bluetooth Audio
-    modo_reparacion_un_clic TEXT,        -- 一键修复 One-key repair
+    -- Componentes
+    tiempo_carga VARCHAR(50),
+    suspension_delantera VARCHAR(100),
+    suspension_trasera VARCHAR(100),
+    tipo_asiento VARCHAR(100),
+    impermeabilidad VARCHAR(50),
+    puerto_usb VARCHAR(50),
+    audio_bluetooth VARCHAR(50),
+    modo_reparacion_un_clic TEXT,
     
-    -- Motor y Transmisión / Motor & Power
-    tipo_motor VARCHAR(100),             -- 电机类型 Motor Type
-    especificacion_iman VARCHAR(100),    -- 电机磁钢 Magnet Steel
-    potencia_nominal VARCHAR(50),        -- 额定功率 Rated Power
-    tipo_transmision VARCHAR(50),        -- 传动方式 Driving Mode
+    -- Motor y Transmisión
+    tipo_motor VARCHAR(100),
+    especificacion_iman VARCHAR(100),
+    potencia_nominal VARCHAR(50),
+    tipo_transmision VARCHAR(50),
     
-    -- Frenos y Ruedas / Brake & Tire
-    tipo_frenos VARCHAR(100),            -- 刹车方式 Brake Type
-    modo_freno VARCHAR(50),              -- 刹车模式 Brake Mode
-    tipo_llanta VARCHAR(100),            -- 轮毂类型 Wheel Hub
-    especificacion_neumatico VARCHAR(50),-- 轮胎 Tyre
+    -- Frenos y Ruedas
+    tipo_frenos VARCHAR(100),
+    modo_freno VARCHAR(50),
+    tipo_llanta VARCHAR(100),
+    especificacion_neumatico VARCHAR(50),
     
-    -- Batería / Battery
-    tipo_bateria VARCHAR(100),           -- 电池 Battery Type
-    especificacion_bateria VARCHAR(50),  -- Voltaje/Amperaje
-    cargador VARCHAR(150),               -- 充电器 Charger Spec
+    -- Batería
+    tipo_bateria VARCHAR(100),
+    especificacion_bateria VARCHAR(50),
+    cargador VARCHAR(150),
     
-    -- Peso y Empaque / Weight & Packing
-    peso_seco VARCHAR(50),               -- 整备质量 Curb Weight
-    peso_total VARCHAR(50),              -- 整车重量 With Battery
-    tipo_empaque VARCHAR(50),            -- 包装方式 Packing Type
-    dimensiones_empaque VARCHAR(100),    -- 外箱尺寸 Packing Size
+    -- Peso y Empaque
+    peso_seco VARCHAR(50),
+    peso_total VARCHAR(50),
+    tipo_empaque VARCHAR(50),
+    dimensiones_empaque VARCHAR(100),
+    
+    -- NUEVA COLUMNA
+    imagen VARCHAR(255),
     
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 3. Inserción de Datos (Las columnas imagen quedarán como NULL por ahora)
 
 INSERT INTO especificaciones_producto (
     modelo_interno, nombre_comercial, cantidad_carga_40hq, colores_disponibles, notas,
@@ -100,7 +114,6 @@ INSERT INTO especificaciones_producto (
     tipo_bateria, especificacion_bateria, cargador,
     peso_seco, peso_total, tipo_empaque, dimensiones_empaque
 ) VALUES 
--- 1. ATHENA (XMM) - Del archivo original
 (
     'XMM', 'ATHENA', '249 unidades', 'Azul/Negro/Verde', NULL,
     'L1405*W650*H1000mm',
@@ -115,7 +128,6 @@ INSERT INTO especificaciones_producto (
     'Plomo-ácido (Tianneng)', '60V20Ah', 'AC:100-264V 50/60HZ 3A',
     '35.5Kg', '66Kg', 'SKD', 'L1235*W310*H685mm'
 ),
--- 2. CORVUS D (U2-骑手版/Rider Edition) - Del archivo original
 (
     'U2-Edición Rider', 'CORVUS D', '160 unidades', 'Verde/Rojo', 'Garantía batería 2 años',
     '1700*680*1010 mm',
@@ -130,7 +142,6 @@ INSERT INTO especificaciones_producto (
     'Litio-Ferrofosfato', '60V20AH', '100-264V 50/60HZ 3A',
     '55.34kg', '65.5kg', 'SKD', 'L1480*W370*H760mm'
 ),
--- 3. CORVUS P+ (U2-用户版) - Nuevo texto 1
 (
     'U2-Usuario', 'CORVUS P+', '160 unidades', 'Amarillo/Verde/Blanco', 'Garantía batería 5 años',
     '1700*680*1010 mm',
@@ -145,7 +156,6 @@ INSERT INTO especificaciones_producto (
     'Litio-Ferrofosfato (New Energy)', '64V33AH', '100-264V 50/60HZ 4A',
     '55.34kg', 'TBD', 'SKD', 'L1480*W370*H760mm'
 ),
--- 4. ATHENA X2 (BJ1-3) - Nuevo texto 2
 (
     'BJ1-3', 'ATHENA X2', '198 unidades', 'Rojo/Gris Nebula/Verde/Beige', 'Pedido mín 2 contenedores',
     '1850*605*1050mm',
@@ -160,7 +170,6 @@ INSERT INTO especificaciones_producto (
     'Plomo-ácido (Tianneng)', '60V20Ah', 'AC:100-264V 50/60HZ 3A',
     '52Kg', '82.5KG', 'SKD', 'L1380*W330*H780mm'
 ),
--- 5. URSA F (BQ1) - Nuevo texto 3
 (
     'BQ1', 'URSA F', '140 unidades', 'Rosa/Gris/Blanco', '/',
     '1655*620*1090mm',
@@ -175,7 +184,6 @@ INSERT INTO especificaciones_producto (
     'Plomo-ácido (Tianneng)', '72V20Ah', '100-264V 50/60HZ 3A',
     '49.5kg', '87kg', 'SKD', 'L1620*W430*H780mm'
 ),
--- 6. URSA F+ (ZM) - Nuevo texto 4
 (
     'ZM', 'URSA F+', '230 unidades', 'Naranja/Azul/Rojo', '/',
     '1670*705*1045mm',
@@ -190,7 +198,6 @@ INSERT INTO especificaciones_producto (
     'Plomo-ácido (Tianneng)', '72V20Ah', '100-264V 50/60HZ 3A',
     '53kg', '90.5kg', 'SKD', 'L1460*W380*H815mm'
 ),
--- 7. CORVUS P (T18S) - Nuevo texto 5
 (
     'T18S', 'CORVUS P', '100 unidades', 'Blanco Metal/Púrpura/Gris', '/',
     '1700*680*1100mm',
@@ -207,7 +214,6 @@ INSERT INTO especificaciones_producto (
 );
 
 INSERT INTO dispositivos_moviles (marca, categoria, modelo, pantalla, procesador, memoria, bateria, carga, camaras, sistema_operativo, extras, puntos_venta_clave, precio_promocion) VALUES
--- SMARTPHONES XIAOMI/REDMI
 ('Redmi', 'Smartphone', 'Redmi 14C', 
  '6.88" HD+ LCD 120Hz (260ppi, 600nits), TÜV Rheinland', 
  'MediaTek Helio G81-Ultra (Octa-core 2.0GHz)', 
@@ -298,7 +304,6 @@ INSERT INTO dispositivos_moviles (marca, categoria, modelo, pantalla, procesador
  NULL, 
  'Calidad precio.', '$2,499'),
 
--- TABLETS XIAOMI/REDMI
 ('Redmi', 'Tablet', 'Redmi Pad SE', 
  'FHD 11" 90Hz', 
  'Snapdragon 680 4G', 
@@ -327,9 +332,8 @@ INSERT INTO dispositivos_moviles (marca, categoria, modelo, pantalla, procesador
  'Trasera 13 MP, Frontal 8 MP', 
  'Android 13', 
  'IP54, 4 Speakers', 
- 'Pantalla Ultra Fluida 144Hz. Procesador potente SD 870.', NULL);
- INSERT INTO dispositivos_moviles (marca, categoria, modelo, pantalla, procesador, memoria, bateria, carga, camaras, sistema_operativo, extras, puntos_venta_clave) VALUES
--- SMARTPHONES HONOR
+ 'Pantalla Ultra Fluida 144Hz. Procesador potente SD 870.', NULL),
+
 ('HONOR', 'Smartphone', 'HONOR X8c', 
  'AMOLED 6.7" FHD+ 120Hz (2800nits), SGS', 
  'Snapdragon 685', 
@@ -338,7 +342,7 @@ INSERT INTO dispositivos_moviles (marca, categoria, modelo, pantalla, procesador
  '108MP OIS+EIS + 5MP Gran Angular, Frontal 50MP Flash', 
  'MagicOS 9.0 (Android 15)', 
  'IP64, Magic Capsule, Magic Portal', 
- 'Primer Smartphone con Borrador IA. Delgado y resistente (caídas 1.8m).'),
+ 'Primer Smartphone con Borrador IA. Delgado y resistente (caídas 1.8m).', NULL),
 
 ('HONOR', 'Smartphone', 'HONOR X7c', 
  'LCD 6.77" HD+ 120Hz, SGS 5 Estrellas', 
@@ -348,7 +352,7 @@ INSERT INTO dispositivos_moviles (marca, categoria, modelo, pantalla, procesador
  '108MP + 2MP Profundidad, Frontal 8MP', 
  'MagicOS 8.0 (Android 14)', 
  'IP64, Altavoces estéreo (300% vol)', 
- 'Resistencia 360° certificada. Batería 2 días. Gran almacenamiento.'),
+ 'Resistencia 360° certificada. Batería 2 días. Gran almacenamiento.', NULL),
 
 ('HONOR', 'Smartphone', 'HONOR X6b', 
  'LCD 6.56" HD+ 90Hz', 
@@ -358,7 +362,7 @@ INSERT INTO dispositivos_moviles (marca, categoria, modelo, pantalla, procesador
  '50MP + 2MP Profundidad, Frontal 5MP', 
  'MagicOS 8.0', 
  'Magic Capsule', 
- 'Batería duradera (hasta 4 años durabilidad). Gran almacenamiento.'),
+ 'Batería duradera (hasta 4 años durabilidad). Gran almacenamiento.', NULL),
 
 ('HONOR', 'Smartphone', 'HONOR Magic7 Lite', 
  'AMOLED 6.78" 1.5K 120Hz (4000 nits)', 
@@ -368,7 +372,7 @@ INSERT INTO dispositivos_moviles (marca, categoria, modelo, pantalla, procesador
  '108MP (OIS) + 5MP, Frontal 16MP', 
  'MagicOS 8.0', 
  'IP65M, SGS 5 Estrellas', 
- 'Súper Resistencia 3ra Gen. Batería Silicon-Carbon 6600mAh (3 días). Cámara 108MP OIS.'),
+ 'Súper Resistencia 3ra Gen. Batería Silicon-Carbon 6600mAh (3 días). Cámara 108MP OIS.', NULL),
 
 ('HONOR', 'Smartphone', 'HONOR 200 Pro 5G', 
  'AMOLED 6.78" FHD+ 120Hz (4000 nits)', 
@@ -378,16 +382,15 @@ INSERT INTO dispositivos_moviles (marca, categoria, modelo, pantalla, procesador
  '50MP OIS + 50MP Tele (2.5x), Frontal 50MP 3D', 
  'MagicOS 8.0', 
  'IP65, Sonido estéreo, Magic Portal, Traducción', 
- 'Cámara Profesional (Sensor SONY, Retrato Harcourt). Carga 100W. IA Avanzada (Goma IA).'),
+ 'Cámara Profesional (Sensor SONY, Retrato Harcourt). Carga 100W. IA Avanzada (Goma IA).', NULL),
 
--- ACCESORIOS HONOR
 ('HONOR', 'Accesorio', 'HONOR CHOICE Portable Bluetooth Speaker', 
- NULL, -- Sin pantalla
- NULL, -- Sin procesador
- NULL, -- Sin memoria
+ NULL, 
+ NULL, 
+ NULL, 
  '1000 mAh (10 Horas)', 
  NULL, 
- NULL, -- Sin camara
+ NULL, 
  NULL, 
  'IP67, Bluetooth, Modo estéreo (dual pairing)', 
- '10 Horas de música. Resistencia IP67. Bajo fuerte 5W.');
+ '10 Horas de música. Resistencia IP67. Bajo fuerte 5W.', NULL);
