@@ -598,10 +598,7 @@ async def call_agent_api(prompt: str) -> str:
 # --- 4. ENDPOINT PRINCIPAL ---
 
 
-AGENT_API_URL = "https://agents.dyna.ai/openapi/v1/conversation/dialog/" # Reemplazar con URL real
-QUERY_KEY = os.getenv("QUERY_KEY")     # Claves específicas solicitadas
-QUERY_TOKEN = os.getenv("QUERY_TOKEN")
-AS_ACCOUNT = os.getenv("AS_ACCOUNT", "").replace('"', '').replace("'", "").strip()
+
 
 
 @app.post("/openapi_test")
@@ -610,6 +607,10 @@ async def openapi_test(data: TestPrompt):
     Endpoint de diagnóstico para verificar conexión, auth y whitelist.
     Uso: {"prompt": "Hola"}
     """
+    AGENT_API_URL = "https://agents.dyna.ai/openapi/v1/conversation/dialog/" # Reemplazar con URL real
+    QUERY_KEY = os.getenv("QUERY_KEY")     # Claves específicas solicitadas
+    QUERY_TOKEN = os.getenv("QUERY_TOKEN")
+    AS_ACCOUNT = os.getenv("AS_ACCOUNT", "").replace('"', '').replace("'", "").strip()
     prompt = data.prompt
     
     # 1. Recopilar credenciales para ver si se están cargando bien
@@ -681,6 +682,11 @@ async def openapi_test(data: TestPrompt):
 
 @app.post("/query-generator")
 async def query_generator(request: QueryRequest, db: Session = Depends(get_db)):
+    AGENT_API_URL = "https://agents.dyna.ai/openapi/v1/conversation/dialog/" # Reemplazar con URL real
+    QUERY_KEY = os.getenv("QUERY_KEY")     # Claves específicas solicitadas
+    QUERY_TOKEN = os.getenv("QUERY_TOKEN")
+    AS_ACCOUNT = os.getenv("AS_ACCOUNT", "").replace('"', '').replace("'", "").strip()
+
     question = request.nlp_query
     
     # --- VALIDACIÓN INICIAL ---
