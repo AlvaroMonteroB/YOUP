@@ -634,6 +634,7 @@ async def query_generator(request: QueryRequest, db: Session = Depends(get_db)):
         sql_clean = sql_generated.replace("```sql", "").replace("```", "").replace(";", "").strip()
         
         if not sql_clean.upper().startswith("SELECT"):
+            logger.info(sql_clean)
             raise Exception(f"El agente no generó un SQL válido: {sql_clean}")
 
         logger.info(f"2. SQL Generado: {sql_clean}")
