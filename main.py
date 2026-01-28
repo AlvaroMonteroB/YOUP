@@ -786,6 +786,7 @@ async def query_generator(request: QueryRequest, db: Session = Depends(get_db)):
         # ==============================================================================
         # PASO 5: RETORNO FINAL
         # ==============================================================================
+        logger.info("5. Paso final, enviando respuesta")
         return responder(
             status_code=200,
             title="Asistente Virtual",
