@@ -587,10 +587,10 @@ async def call_agent_api(prompt: str, AGENT_API_URL) -> str:
             AGENT_API_URL,
             headers={
                 'Content-Type': 'application/json',
-                'cybertron-robot-key': QUERY_KEY,   # Usando las keys solicitadas
-                'cybertron-robot-token': QUERY_TOKEN
+                'cybertron-robot-key': os.getenv("QUERY_KEY") ,   # Usando las keys solicitadas
+                'cybertron-robot-token': os.getenv("QUERY_TOKEN")
             },
-            json={"username": AS_ACCOUNT, "question": prompt},
+            json={"username": os.getenv("AS_ACCOUNT"), "question": prompt},
             timeout=45.0 # Un poco más de tiempo para análisis
         )
         response.raise_for_status()
