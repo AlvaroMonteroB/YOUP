@@ -718,28 +718,30 @@ async def test_sql_raw(request: SqlRequest, db: Session = Depends(get_db)):
     """
     sql_query = request.sql
 
-    # Validación simple
     if not sql_query or not sql_query.strip():
         return responder(400, "Error", {"mensaje": "La consulta SQL no puede estar vacía."})
 
     try:
         logger.info(f"Ejecutando SQL manual: {sql_query}")
         
-        # 1. Ejecutar la query usando text() para seguridad básica
         result = db.execute(text(sql_query))
         
-        # 2. Verificar si la query retorna filas (es un SELECT)
         if result.returns_rows:
             keys = result.keys()
-            # Convertimos las filas de SQLAlchemy a diccionarios de Python
+            # 1. Convertimos a diccionarios
             data = [dict(zip(keys, row)) for row in result]
             
+            # 2. SOLUCIÓN AL ERROR DATETIME:
+            # Serializamos a string JSON usando 'str' para tipos desconocidos (fechas, decimales)
+            # y luego lo volvemos a convertir a lista/dict de Python.
+            # Esto convierte datetime -> "2024-01-28T..."
+            data_serializable = json.loads(json.dumps(data, default=str))
+            
             return responder(200, "Query Exitosa", {
-                "filas_encontradas": len(data),
-                "resultados": data
+                "filas_encontradas": len(data_serializable),
+                "resultados": data_serializable
             })
         else:
-            # Para INSERT, UPDATE, DELETE (si lo permites)
             db.commit()
             return responder(200, "Ejecución Exitosa", {
                 "mensaje": f"Operación realizada. Filas afectadas: {result.rowcount}"
@@ -747,9 +749,7 @@ async def test_sql_raw(request: SqlRequest, db: Session = Depends(get_db)):
 
     except Exception as e:
         logger.error(f"Error ejecutando SQL manual: {e}")
-        # Retornamos el error exacto de la base de datos para que sepas qué corregir
         return responder(500, "Error SQL", {"detalle_error": str(e)})
-            
 
 
 
