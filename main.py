@@ -644,6 +644,7 @@ async def query_generator(request: QueryRequest, db: Session = Depends(get_db)):
         result_proxy = db.execute(text(sql_clean))
         keys = result_proxy.keys()
         db_results = [dict(zip(keys, row)) for row in result_proxy]
+        db_results = json.loads(json.dumps(db_results, default=str))
         
         logger.info(f"3. Resultados DB encontrados: {len(db_results)}")
 
