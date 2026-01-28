@@ -619,14 +619,6 @@ async def query_generator(request: QueryRequest, db: Session = Depends(get_db)):
         # ==============================================================================
         schema_prompt = f"""
         Actúa como un ingeniero de datos experto. Convierte la siguiente pregunta en lenguaje natural a una consulta SQL PostgreSQL válida.
-        
-        ESQUEMA DE TABLAS:
-        - marcas (id_marca, nombre_marca)
-        - modelos (id_modelo, id_marca, nombre_modelo)
-        - pictures (id, url) -> IMPORTANTE: El resultado debe incluir 'image_url' si existe.
-        - especificaciones (id_especificacion, id_modelo, bateria_v_ah, potencia_w, velocidad_maxima_km_h, rango_km, peso_neto_kg...)
-        - precios (id_precio, id_modelo, minorista_mxn)
-
         Pregunta: "{question}"
 
         REGLAS:
