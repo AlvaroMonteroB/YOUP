@@ -69,6 +69,10 @@ Base = declarative_base()
 
 
 # 3. Modelos de Datos
+
+class TestPrompt(BaseModel):
+    prompt: str
+
 class VehicleSpec(Base):
     __tablename__ = "especificaciones_producto"
 
@@ -600,6 +604,80 @@ QUERY_TOKEN = os.getenv("QUERY_TOKEN")
 AS_ACCOUNT = os.getenv("AS_ACCOUNT", "").replace('"', '').replace("'", "").strip()
 
 
+@app.post("/openapi_test")
+async def openapi_test(data: TestPrompt):
+    """
+    Endpoint de diagnóstico para verificar conexión, auth y whitelist.
+    Uso: {"prompt": "Hola"}
+    """
+    prompt = data.prompt
+    
+    # 1. Recopilar credenciales para ver si se están cargando bien
+    debug_info = {
+        "url_destino": AGENT_API_URL,
+        "username_enviado": AS_ACCOUNT,
+        "token_len": len(QUERY_TOKEN) if QUERY_TOKEN else 0,
+        "key_len": len(QUERY_KEY) if QUERY_KEY else 0
+    }
+
+    logger.info(f"--- INICIANDO TEST DE CONEXIÓN A: {AGENT_API_URL} ---")
+
+    try:
+        async with httpx.AsyncClient() as client:
+            # Hacemos la petición manual aquí para tener control total
+            response = await client.post(
+                AGENT_API_URL,
+                headers={
+                    'Content-Type': 'application/json',
+                    'cybertron-robot-key': QUERY_KEY,
+                    'cybertron-robot-token': QUERY_TOKEN
+                },
+                json={"username": AS_ACCOUNT, "question": prompt},
+                timeout=15.0 
+            )
+            
+            # Intentamos leer el JSON, si no es JSON, leemos texto crudo
+            try:
+                resp_json = response.json()
+            except:
+                resp_json = "No es un JSON válido"
+
+            # Construimos el reporte de resultados
+            resultado = {
+                "exito_tecnico": True, # Significa que hubo respuesta HTTP (aunque sea error 400/500)
+                "status_code": response.status_code,
+                "debug_info": debug_info,
+                "respuesta_servidor": resp_json,
+                "respuesta_texto_raw": response.text[:500] # Primeros 500 caracteres por si es HTML de error
+            }
+
+            # ANÁLISIS AUTOMÁTICO DE ERRORES COMUNES
+            if response.status_code == 200:
+                resultado["diagnostico"] = "✅ CONEXIÓN EXITOSA. Todo funciona correctamente."
+            elif response.status_code == 401:
+                resultado["diagnostico"] = "❌ ERROR DE AUTH (401). Tus Tokens/Keys son incorrectos o expiraron."
+            elif response.status_code == 403:
+                resultado["diagnostico"] = "🚫 PROHIBIDO (403). Posible error de WHITELIST. Tu IP o Usuario no tiene permisos."
+            elif response.status_code == 404:
+                resultado["diagnostico"] = "❌ URL NO ENCONTRADA (404). Verifica AGENT_API_URL."
+            elif response.status_code >= 500:
+                resultado["diagnostico"] = "🔥 ERROR DEL SERVIDOR REMOTO (500+). El problema es de ellos, no tuyo."
+            
+            return resultado
+
+    except httpx.ConnectError:
+        return {
+            "exito_tecnico": False,
+            "error": "ConnectError",
+            "diagnostico": "❌ NO SE PUDO CONECTAR. Verifica: 1. Tu internet. 2. Que la URL sea correcta. 3. Firewall bloqueando salida."
+        }
+    except Exception as e:
+        return {
+            "exito_tecnico": False,
+            "error": str(e),
+            "diagnostico": "❌ Error inesperado en el código de Python."
+        }
+
 
 @app.post("/query-generator")
 async def query_generator(request: QueryRequest, db: Session = Depends(get_db)):
@@ -710,7 +788,7 @@ async def query_generator(request: QueryRequest, db: Session = Depends(get_db)):
 
     except Exception as e:
         logger.error(f"Error crítico en query_generator: {e}")
-        return responder(500, "Error en el sistema", {"mensaje": f"Ocurrió un problema procesando tu solicitud: {str(e)}"})
+        return responder(200, "Error en el sistema", {"mensaje": f"Ocurrió un problema procesando tu solicitud: {str(e)}"})
 
 @app.post("/test-sql-raw")
 async def test_sql_raw(request: SqlRequest, db: Session = Depends(get_db)):
