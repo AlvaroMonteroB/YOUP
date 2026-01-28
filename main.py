@@ -609,6 +609,8 @@ async def openapi_test(data: TestPrompt):
     Endpoint de diagnóstico para verificar conexión, auth y whitelist.
     Uso: {"prompt": "Hola"}
     """
+    logger.info(os.getenv("QUERY_TOKEN"))
+    logger.info(os.getenv("QUERY_KEY"))
     AGENT_API_URL = "https://agents.dyna.ai/openapi/v1/conversation/dialog/" # Reemplazar con URL real
     QUERY_KEY =data.key if data.key else os.getenv("QUERY_KEY")     # Claves específicas solicitadas
     QUERY_TOKEN = data.token if data.token else os.getenv("QUERY_TOKEN")
