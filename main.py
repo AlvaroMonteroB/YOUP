@@ -579,7 +579,7 @@ async def enviar_whatsapp_logic(phone: str, image_url: str):
     # Aquí tu código real de Twilio/Meta
     pass
 
-async def call_agent_api(prompt: str) -> str:
+async def call_agent_api(prompt: str, AGENT_API_URL) -> str:
     """Función auxiliar para llamar al agente y obtener texto limpio"""
     logger.info("Llamando api agent studio")
     async with httpx.AsyncClient() as client:
@@ -716,7 +716,7 @@ async def query_generator(request: QueryRequest, db: Session = Depends(get_db)):
         3. Si no puedes, devuelve "ERROR".
         """
         
-        sql_generated = await call_agent_api(schema_prompt)
+        sql_generated = await call_agent_api(schema_prompt,AGENT_API_URL)
         
         # Limpieza de la respuesta del agente
         sql_clean = sql_generated.replace("```sql", "").replace("```", "").replace(";", "").strip()
@@ -781,7 +781,7 @@ async def query_generator(request: QueryRequest, db: Session = Depends(get_db)):
             """
             
             logger.info("4. Enviando datos al agente para interpretación...")
-            final_message = await call_agent_api(analysis_prompt)
+            final_message = await call_agent_api(analysis_prompt,AGENT_API_URL)
 
         # ==============================================================================
         # PASO 5: RETORNO FINAL
