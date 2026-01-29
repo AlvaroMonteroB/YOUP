@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 from motor.motor_asyncio import AsyncIOMotorClient
 
 # --- SQLALCHEMY IMPORTS CORREGIDOS ---
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, func, text # <--- Faltaban estos
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, func, text, Float, Numeric # <--- Faltaban estos
 from sqlalchemy.orm import sessionmaker, Session, declarative_base # <--- Faltaba Session y declarative_base
 """
 sudo docker-compose up -d --build
