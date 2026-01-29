@@ -80,33 +80,50 @@ class VehicleSpec(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     
-    # Información Básica
-    modelo_interno = Column(String(50), unique=True, index=True) # XMM, T18S
-    nombre_comercial = Column(String(100))                       # ATHENA
-    cantidad_carga_40hq = Column(String(100))
+    # --- Información Básica ---
+    modelo_interno = Column(String(50))
+    nombre_comercial = Column(String(100))
+    # Renombrado a _texto para coincidir con SQL
+    cantidad_carga_40hq_texto = Column(String(100)) 
     colores_disponibles = Column(String(100))
     notas = Column(String(255))
     
-    # Dimensiones
+    # --- Dimensiones ---
     dimensiones_producto = Column(String(100))
     
-    # Funciones Inteligentes y Seguridad
+    # --- Funciones Inteligentes ---
     funciones_app = Column(Text)
     sistema_antirrobo = Column(Text)
     sistema_seguridad_ai = Column(Text)
     metodo_arranque = Column(String(150))
     
-    # Rendimiento
-    autonomia_km = Column(String(150))
-    velocidad_maxima = Column(String(100))
-    carga_maxima = Column(String(100))
-    torque_maximo = Column(String(100))
-    potencia_pico = Column(String(100))
-    capacidad_escalada = Column(String(50))
-    distancia_al_suelo = Column(String(50))
+    # --- Rendimiento (Texto Original) ---
+    autonomia_texto = Column(String(150))
+    velocidad_maxima_texto = Column(String(100))
+    carga_maxima_texto = Column(String(100))
+    torque_maximo_texto = Column(String(100))
+    potencia_pico_texto = Column(String(100))
+    capacidad_escalada_texto = Column(String(50))
+    distancia_al_suelo_texto = Column(String(50))
     
-    # Componentes Físicos
-    tiempo_carga = Column(String(50))
+    # --- DATOS NUMÉRICOS (Nuevos para análisis) ---
+    autonomia_km_num = Column(Integer)
+    velocidad_max_kmh = Column(Integer)
+    carga_max_kg = Column(Integer)
+    torque_nm = Column(Integer)
+    potencia_pico_w = Column(Integer)
+    potencia_nominal_w = Column(Integer)
+    grado_escalada_deg = Column(Integer)
+    despeje_suelo_mm = Column(Integer)
+    tiempo_carga_horas = Column(Float)      # DECIMAL(4,1) en SQL se mapea bien a Float
+    peso_seco_kg = Column(Float)
+    peso_total_kg = Column(Float)
+    bateria_voltaje_v = Column(Integer)
+    bateria_amperaje_ah = Column(Integer)
+    cantidad_40hq_num = Column(Integer)
+
+    # --- Componentes Físicos ---
+    tiempo_carga_texto = Column(String(50))
     suspension_delantera = Column(String(100))
     suspension_trasera = Column(String(100))
     tipo_asiento = Column(String(100))
@@ -115,63 +132,73 @@ class VehicleSpec(Base):
     audio_bluetooth = Column(String(50))
     modo_reparacion_un_clic = Column(Text)
     
-    # Motor y Transmisión
+    # --- Motor y Transmisión ---
     tipo_motor = Column(String(100))
     especificacion_iman = Column(String(100))
-    potencia_nominal = Column(String(50))
+    potencia_nominal_texto = Column(String(50))
     tipo_transmision = Column(String(50))
     
-    # Frenos y Ruedas
+    # --- Frenos y Ruedas ---
     tipo_frenos = Column(String(100))
     modo_freno = Column(String(50))
     tipo_llanta = Column(String(100))
     especificacion_neumatico = Column(String(50))
     
-    # Batería
+    # --- Batería ---
     tipo_bateria = Column(String(100))
-    especificacion_bateria = Column(String(50))
+    especificacion_bateria_texto = Column(String(50))
     cargador = Column(String(150))
     
-    # Peso y Empaque
-    peso_seco = Column(String(50))
-    peso_total = Column(String(50))
+    # --- Peso y Empaque ---
+    peso_seco_texto = Column(String(50))
+    peso_total_texto = Column(String(50))
     tipo_empaque = Column(String(50))
     dimensiones_empaque = Column(String(100))
     
-    # Imagen y Fecha
-    imagen = Column(String(255))            # <--- Nueva Columna
+    # --- Imagen y Fecha ---
+    imagen = Column(String(255))
     fecha_creacion = Column(DateTime, server_default=func.now())
 
-# TABLA 2: Dispositivos Móviles
 
+# TABLA 2: Dispositivos Móviles
 class MobileDevice(Base):
     __tablename__ = "dispositivos_moviles"
 
     id = Column(Integer, primary_key=True, index=True)
     
-    # Clasificación
-    marca = Column(String(50))              # Xiaomi, Redmi, HONOR
-    categoria = Column(String(50))          # Smartphone, Tablet
-    modelo = Column(String(100), index=True)# Redmi Note 13 Pro
+    # --- Clasificación ---
+    marca = Column(String(50))
+    categoria = Column(String(50))
+    modelo = Column(String(100), index=True)
     
-    # Especificaciones Técnicas
-    pantalla = Column(Text)                 # Tamaño, tipo, Hz
+    # --- Especificaciones (Texto Original) ---
+    pantalla_texto = Column(Text)       # Renombrado
     procesador = Column(String(150))
-    memoria = Column(String(150))           # RAM + ROM
-    bateria = Column(String(100))
-    carga = Column(String(100))
+    memoria_texto = Column(String(150)) # Renombrado
+    bateria_texto = Column(String(100)) # Renombrado
+    carga_texto = Column(String(100))   # Renombrado
     
-    # Multimedia y Software
-    camaras = Column(Text)
+    # --- DATOS NUMÉRICOS (Nuevos para análisis) ---
+    pantalla_pulgadas = Column(Float)
+    refresco_pantalla_hz = Column(Integer)
+    ram_gb = Column(Integer)
+    rom_gb = Column(Integer)
+    bateria_mah = Column(Integer)
+    carga_w = Column(Integer)
+    camara_principal_mp = Column(Integer)
+    precio_num = Column(Numeric(10, 2)) # Numeric es mejor para dinero que Float
+
+    # --- Multimedia y Software ---
+    camaras_texto = Column(Text)        # Renombrado
     sistema_operativo = Column(String(100))
     
-    # Otros
+    # --- Otros ---
     extras = Column(Text)
-    puntos_venta_clave = Column(Text)       # KSP
-    precio_promocion = Column(String(50))
+    puntos_venta_clave = Column(Text)
+    precio_promocion_texto = Column(String(50)) # Renombrado
     
-    # Imagen y Fecha
-    imagen = Column(String(255))            # <--- Nueva Columna
+    # --- Imagen y Fecha ---
+    imagen = Column(String(255))
     fecha_creacion = Column(DateTime, server_default=func.now())
 
 
