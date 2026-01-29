@@ -8,4 +8,3 @@ httpx
 requests
 sqlalchemy
 psycopg2-binary
-database
